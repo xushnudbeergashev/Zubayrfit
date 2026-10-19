@@ -838,7 +838,9 @@ $("#file").onchange = async () => {
           setMedia(i, {blob: f, video: true});
         } else setMedia(i, {blob: await compress(f), video: false});
       } catch (err) {
-        problems.push(err?.message === "big" ? "Rasm juda katta. Boshqasini tanlang." : "Bu faylni ochib bo'lmadi. Boshqasini tanlang.");
+        problems.push((err?.message === "heic"
+          ? "Bu rasm HEIC formatida, uni telefon ilovada ocha olmadi. Kamera sozlamalarida «Yuqori samarali rasmlar» (HEIF)ni o'chiring yoki rasmni skrinshot qilib tanlang."
+          : "Bu faylni ochib bo'lmadi. Boshqasini tanlang.") + (ME.is_admin && err?.detail ? `\n(Admin uchun: ${err.detail})` : ""));
       } finally {
         $(`.slot[data-i="${i}"]`).classList.remove("busy");
       }
@@ -868,38 +870,45 @@ function setMedia(i, m, keepUrl) {
   $("#f-media").classList.remove("bad");
 }
 const withTimeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), ms))]);
-// Rasmni 1600px gacha kichraytirib JPEG qiladi (iPhone HEIC ham shu yerda JPEG'ga aylanadi).
-// Ochilmasa yoki juda uzoq ketsa, ilova qotib qolmaydi: xato qaytadi yoki asl fayl olinadi.
+const isHeic = f => /hei[cf]/i.test(f.type) || /\.hei[cf]$/i.test(f.name || "");
+function loadImg(file) {
+  const url = URL.createObjectURL(file);
+  return new Promise((res, rej) => {
+    const i = new Image();
+    i.onload = () => res({src: i, w: i.naturalWidth, h: i.naturalHeight, done: () => URL.revokeObjectURL(url)});
+    i.onerror = () => { URL.revokeObjectURL(url); rej(new Error("img decode")); };
+    i.src = url;
+  });
+}
+const bitmap = (file, opts) => createImageBitmap(file, opts).then(b => ({src: b, w: b.width, h: b.height, done: () => b.close?.()}));
+// Rasmni 1600px gacha kichraytirib JPEG qiladi. Telefonlar har xil: birinchi usul ochmasa, keyingisi sinab ko'riladi
+// (katta 50 MP rasmlarni ba'zi Android'lar faqat kichraytirib ochadi). Hech biri ochmasa, xato qaytadi, ilova qotmaydi.
 async function compress(file) {
-  const MAX = 1600, okRaw = file.size <= 8 * 1024 * 1024 && /^image\/(jpeg|png|webp)$/.test(file.type);
-  let src, w, h, url;
+  const MAX = 1600, tries = [];
+  if (window.createImageBitmap) tries.push(() => bitmap(file), () => bitmap(file, {resizeWidth: MAX, resizeQuality: "medium"}));
+  tries.push(() => loadImg(file));
+  let img, last;
+  for (const t of tries) {
+    try { img = await withTimeout(t(), 20000); if (img.w && img.h) break; img.done(); img = null; }
+    catch (e) { last = e; img = null; }
+  }
+  if (!img) {
+    const e = new Error(isHeic(file) ? "heic" : "decode");
+    e.detail = `${file.type || "turi yo'q"}, ${(file.size / 1048576).toFixed(1)} MB, ${last?.name || ""}: ${last?.message || "o'lcham 0"}`;
+    throw e;
+  }
   try {
-    if (window.createImageBitmap) {
-      src = await withTimeout(createImageBitmap(file).catch(() => { throw new Error("decode"); }), 15000);
-      w = src.width; h = src.height;
-    } else {
-      url = URL.createObjectURL(file);
-      src = await withTimeout(new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error("decode")); i.src = url; }), 15000);
-      w = src.naturalWidth; h = src.naturalHeight;
-    }
-    if (!w || !h) throw new Error("empty");
-    const k = Math.min(1, MAX / Math.max(w, h));
+    const k = Math.min(1, MAX / Math.max(img.w, img.h));
     const c = document.createElement("canvas");
-    c.width = Math.max(1, Math.round(w * k)); c.height = Math.max(1, Math.round(h * k));
-    c.getContext("2d").drawImage(src, 0, 0, c.width, c.height);
-    src.close?.();
-    const blob = await withTimeout(new Promise(res => c.toBlob(res, "image/jpeg", 0.85)), 15000);
+    c.width = Math.max(1, Math.round(img.w * k)); c.height = Math.max(1, Math.round(img.h * k));
+    c.getContext("2d").drawImage(img.src, 0, 0, c.width, c.height);
+    const blob = await withTimeout(new Promise(res => c.toBlob(res, "image/jpeg", 0.85)), 20000).catch(() => null);
     c.width = c.height = 0; // xotirani bo'shatish
     if (blob && blob.size) return blob;
-    if (okRaw) return file;
-    throw new Error("encode");
-  } catch (err) {
-    // Rasm umuman ochilmasa, asl faylni ham yubormaymiz (u ham buzilgan bo'ladi)
-    if (okRaw && err?.message !== "decode") return file;
-    throw file.size > 8 * 1024 * 1024 ? new Error("big") : err;
-  } finally {
-    if (url) URL.revokeObjectURL(url);
-  }
+  } finally { img.done(); }
+  // Siqib bo'lmadi, lekin rasm o'zi to'g'ri ochildi: mos bo'lsa asl faylni yuboramiz
+  if (file.size <= 8 * 1024 * 1024 && /^image\/(jpeg|png|webp)$/.test(file.type)) return file;
+  const e = new Error("encode"); e.detail = `${file.type}, ${(file.size / 1048576).toFixed(1)} MB`; throw e;
 }
 $("#region").onchange = () => { fillDistricts($("#district"), $("#region").value, "Tanlang…"); $("#f-region").classList.remove("bad"); };
 $("#extra").oninput = () => $("#cnt").textContent = $("#extra").value.length;
