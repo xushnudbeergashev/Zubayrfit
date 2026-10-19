@@ -839,7 +839,7 @@ $("#file").onchange = async () => {
         } else setMedia(i, {blob: await compress(f), video: false});
       } catch (err) {
         problems.push((err?.message === "heic"
-          ? "Bu rasm HEIC formatida, uni telefon ilovada ocha olmadi. Kamera sozlamalarida «Yuqori samarali rasmlar» (HEIF)ni o'chiring yoki rasmni skrinshot qilib tanlang."
+          ? "Bu rasm HEIC formatida va uni JPEG'ga aylantirib bo'lmadi. Internetni tekshirib, qayta urinib ko'ring yoki rasmni skrinshot qilib tanlang."
           : "Bu faylni ochib bo'lmadi. Boshqasini tanlang.") + (ME.is_admin && err?.detail ? `\n(Admin uchun: ${err.detail})` : ""));
       } finally {
         $(`.slot[data-i="${i}"]`).classList.remove("busy");
@@ -880,6 +880,28 @@ function loadImg(file) {
     i.src = url;
   });
 }
+// HEIC (Samsung/iPhone "yuqori samarali" rasmlar)ni Android ocha olmaydi. Shunday rasm tanlanganda
+// o'girgich kutubxona bir marta yuklanadi va rasm JPEG'ga aylantiriladi.
+const HEIC_LIB = ["https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js", "https://unpkg.com/heic2any@0.0.4/dist/heic2any.min.js"];
+let heicLib = null;
+function loadHeicLib() {
+  if (window.heic2any) return Promise.resolve(window.heic2any);
+  return heicLib ||= (async () => {
+    for (const src of HEIC_LIB) {
+      try {
+        await new Promise((res, rej) => { const sc = document.createElement("script"); sc.src = src; sc.onload = res; sc.onerror = rej; document.head.append(sc); });
+        if (window.heic2any) return window.heic2any;
+      } catch {}
+    }
+    heicLib = null;
+    throw new Error("heic lib");
+  })();
+}
+async function heicToJpeg(file) {
+  const conv = await withTimeout(loadHeicLib(), 30000);
+  const out = await conv({blob: file, toType: "image/jpeg", quality: 0.9});
+  return Array.isArray(out) ? out[0] : out;
+}
 const bitmap = (file, opts) => createImageBitmap(file, opts).then(b => ({src: b, w: b.width, h: b.height, done: () => b.close?.()}));
 // Rasmni 1600px gacha kichraytirib JPEG qiladi. Telefonlar har xil: birinchi usul ochmasa, keyingisi sinab ko'riladi
 // (katta 50 MP rasmlarni ba'zi Android'lar faqat kichraytirib ochadi). Hech biri ochmasa, xato qaytadi, ilova qotmaydi.
@@ -891,6 +913,11 @@ async function compress(file) {
   for (const t of tries) {
     try { img = await withTimeout(t(), 20000); if (img.w && img.h) break; img.done(); img = null; }
     catch (e) { last = e; img = null; }
+  }
+  if (!img && isHeic(file)) {
+    let jpg;
+    try { jpg = await withTimeout(heicToJpeg(file), 90000); } catch (err) { last = err; }
+    if (jpg?.size) return compress(new File([jpg], "photo.jpg", {type: "image/jpeg"}));
   }
   if (!img) {
     const e = new Error(isHeic(file) ? "heic" : "decode");
