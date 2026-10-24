@@ -213,14 +213,14 @@ test("admin tasdiqlaydi (Navbat va eski bot tugmasi) → kanalga chiqadi, check_
   assert.equal(j.ok, true, j.error);
   assert.equal(j.left, 1);
   let cap = lastCall("sendMediaGroup").body.media[0].caption;
-  assert.match(cap, /📞 \+998 90 123 45 67/);
+  assert.match(cap, /\n\n📞 \+998 90 123 45 67/, "kontakt oldidan bo'sh qator");
   assert.doesNotMatch(cap, /Telegram:/);
   assert.match(callsOf("editMessageText").filter((c) => c.body.chat_id === ADMIN).at(-1).body.text, /1 ta yangi e'lon/);
   const again = await reqJson(`/api/admin/queue/${phoneOnlyId}`, { method: "POST", user: { id: ADMIN, first_name: "Admin" }, body: { action: "approve" } });
   assert.match(again.error, /allaqachon/);
   await cb({ id: ADMIN, first_name: "Admin" }, `m:ok:${userOnlyId}`);
   cap = lastCall("sendMediaGroup").body.media[0].caption;
-  assert.match(cap, /Telegram: @boshqa_nom/);
+  assert.match(cap, /\n\n🌎 Telegram: @boshqa_nom/);
   assert.doesNotMatch(cap, /📞/);
   assert.equal(lastCall("deleteMessage").body.chat_id, ADMIN, "navbat bo'shadi — yig'ma xabar o'chiriladi");
   const r = row(phoneOnlyId);
@@ -358,7 +358,7 @@ test("import qilingan post yopilganda formatlash (entities) saqlanadi", async ()
   await cb({ id: ADMIN, first_name: "Admin" }, `a:closed:${l.id}`);
   const edit = lastCall("editMessageCaption").body;
   assert.doesNotMatch(edit.caption, /998/);
-  assert.match(edit.caption, /⛔️ E'lon dolzarb emas/);
+  assert.match(edit.caption, /Chilonzor\n\n⛔️ E'lon dolzarb emas\nQo'shimcha/);
   const ents = edit.caption_entities;
   assert.equal(ents.length, 2); // telefon formatlashi kontakt bilan birga ketdi
   const b = ents.find((e) => e.type === "bold");
@@ -518,6 +518,7 @@ test("«Dolzarb emas»: post tahrirlanadi, kanalga alohida xabar yuborilmaydi; �
   j = await reqJson(`/api/my/${b}/close`, { method: "POST", user: USER, body: { status: "given" } });
   assert.equal(toChannel("sendMessage").length, n + 1);
   assert.ok(row(b).close_reply_msg, "javob xabari raqami saqlanadi");
+  assert.match(lastCall("editMessageCaption").body.caption, /\n\n✅ <b>Berildi<\/b>/, "«Berildi» oldidan bo'sh qator");
 });
 
 test("admin: berilgan e'lonni yana faol qiladi — kontaktlar qaytadi, «Berildi» javobi o'chiriladi", async () => {

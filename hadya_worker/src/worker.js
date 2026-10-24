@@ -279,9 +279,11 @@ function buildCaption(env, l, bot, closedAs, extra) {
       `🚗 Dostafka: ${DELIVERY[d.delivery]}`, `💰 Narxi: ${priceText(l)}`);
   }
   if (extra) lines.push(`🔖Qo'shimcha ma'lumot: ${esc(extra)}`);
-  if (closedAs) lines.push(CLOSED_LABEL[closedAs]);
-  else {
+  // Kontaktlar (yoki «Berildi» yozuvi) bo'sh qator bilan ajratiladi — ko'zga tez tashlansin
+  if (closedAs) lines.push("", CLOSED_LABEL[closedAs]);
+  else if (l.username || d.phone) {
     // Kontakt: foydalanuvchi qaysi birini kiritgan bo'lsa, faqat o'shasi chiqadi
+    lines.push("");
     if (l.username) lines.push(`🌎 Telegram: @${esc(l.username)}`);
     if (d.phone) lines.push(`📞 ${fmtPhone(d.phone)}`);
   }
@@ -821,7 +823,8 @@ function stripContacts(l, label, limit) {
   lines.forEach((ln, i) => {
     const piece = ln + (i < lines.length - 1 ? "\n" : "");
     if (isContact(ln)) {
-      if (!placed) out += label + (piece.endsWith("\n") ? "\n" : "");
+      // yozuv oldidan bo'sh qator (matnning o'zida bo'lmasa)
+      if (!placed) out += (out && !out.endsWith("\n\n") ? "\n" : "") + label + (piece.endsWith("\n") ? "\n" : "");
       placed = true;
     } else {
       const last = segs.at(-1);
