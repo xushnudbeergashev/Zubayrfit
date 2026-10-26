@@ -207,8 +207,23 @@ nav button.on{background:var(--lemon);color:var(--ink)}
 .bubble.me{align-self:flex-end;background:var(--blue);color:var(--white);border-bottom-right-radius:6px}
 .bubble.ai{align-self:flex-start;background:var(--white);border:2px solid var(--ink);border-bottom-left-radius:6px}
 .bubble.wait{color:var(--muted);border-style:dashed}
-.suggest{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
-.suggest button{text-align:left;background:var(--white);border:2px solid var(--ink);border-radius:14px;padding:11px 14px;font-size:14px;font-weight:600}
+.faq-search{display:flex;align-items:center;gap:8px;background:var(--white);border:2px solid var(--ink);border-radius:16px;padding:0 14px;margin-bottom:16px}
+.faq-search svg{width:20px;height:20px;flex:0 0 auto;color:var(--muted)}
+.faq-search input{flex:1;min-width:0;border:0;background:transparent;outline:none;padding:12px 0;font-size:16px}
+.faq-cat{font-family:var(--display);font-size:13px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:18px 0 8px}
+.faq-group:first-child .faq-cat{margin-top:0}
+.faq-item{background:var(--white);border:2px solid var(--ink);border-radius:14px;margin-bottom:8px;overflow:hidden}
+.faq-item summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;padding:12px 14px;font-size:15px;font-weight:600}
+.faq-item summary::-webkit-details-marker{display:none}
+.faq-item summary::after{content:"+";margin-left:auto;flex:0 0 auto;width:24px;height:24px;border-radius:50%;background:var(--lemon);border:2px solid var(--ink);
+  display:grid;place-items:center;font-size:16px;line-height:1;transition:transform .2s}
+.faq-item[open] summary::after{transform:rotate(45deg)}
+.faq-item[open] summary{border-bottom:2px dashed #D8D8E6}
+.faq-item .ans{padding:10px 14px 14px;font-size:14.5px;line-height:1.5}
+.faq-none{text-align:center;color:var(--muted);padding:18px 8px;font-size:14px}
+.faq-none button{display:block;margin:10px auto 0;background:var(--lemon);border:2px solid var(--ink);border-radius:12px;padding:9px 16px;font-weight:700;color:var(--ink)}
+.ai-title{margin-top:26px;padding-top:18px;border-top:2px solid var(--ink)}
+@media (prefers-reduced-motion:reduce){.faq-item summary::after{transition:none}}
 .askbox{display:flex;gap:8px;align-items:flex-end;background:var(--white);border:2px solid var(--ink);border-radius:20px;padding:7px 7px 7px 14px}
 .askbox textarea{flex:1;min-width:0;border:0;background:transparent;outline:none;resize:none;min-height:26px;max-height:120px;padding:8px 0;font-size:16px}
 .askbox button{flex:0 0 auto;width:44px;height:44px;border-radius:14px;border:2px solid var(--ink);background:var(--lemon);display:grid;place-items:center}
@@ -436,14 +451,16 @@ nav button{position:relative}
 </section>
 
 <section class="view pad" id="v-ask" hidden>
-  <h1>Mushuk haqida savol</h1>
-  <p class="lead">Parvarish, ovqat, sog'liq va xulq haqida so'rang</p>
+  <h1>Savol-javob</h1>
+  <p class="lead">Ko'p so'raladigan savollar. Savolni bosing — javobi ochiladi</p>
+  <label class="faq-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4-4"/></svg>
+    <input type="search" id="faqQ" placeholder="Qidirish: to'lov, rasm, emlash…" aria-label="Savollardan qidirish" autocomplete="off"></label>
+  <div id="faq"></div>
+  <div class="faq-none" id="faqNone" hidden>Bu so'z bo'yicha savol topilmadi.<button type="button" id="faqToAi">AI'dan so'rash</button></div>
+
+  <h2 class="ai-title" id="aiTitle">Javob topmadingizmi? AI'dan so'rang</h2>
+  <p class="lead" style="margin-top:-6px">Mushuk parvarishi, ovqat, sog'liq va xulq haqida istalgan savol</p>
   <div class="chat" id="chat"></div>
-  <div class="suggest" id="suggest">
-    <button>2 oylik mushukchani nima bilan boqish kerak?</button>
-    <button>Mushukni lotokka qanday o'rgataman?</button>
-    <button>Mushukni qachon emlash kerak?</button>
-  </div>
   <form class="askbox" id="askForm">
     <textarea id="q" rows="1" maxlength="500" placeholder="Savolingizni yozing…" aria-label="Savol"></textarea>
     <button id="askBtn" aria-label="Yuborish"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
@@ -1142,7 +1159,7 @@ async function askAI(question) {
   question = question.trim();
   if (asking || question.length < 3) return;
   if (!inTg) return $("#askErr").textContent = "Savol berish uchun ilovani bot orqali oching.";
-  asking = true; $("#askBtn").disabled = true; $("#askErr").textContent = ""; $("#suggest").hidden = true;
+  asking = true; $("#askBtn").disabled = true; $("#askErr").textContent = "";
   bubble(question, "me"); $("#q").value = ""; autoGrow();
   const wait = bubble("Javob yozilmoqda…", "ai wait");
   const j = await api("api/ask", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({question, history: chatHistory})});
@@ -1154,7 +1171,6 @@ async function askAI(question) {
     ME.ai_left = j.left; haptic("success");
   } else {
     $("#askErr").textContent = j.error || "Xatolik yuz berdi.";
-    if (!chatHistory.length && !$("#chat").children.length) $("#suggest").hidden = false;
   }
   refreshAiLeft(); asking = false; $("#askBtn").disabled = false;
 }
@@ -1162,7 +1178,90 @@ const autoGrow = () => { const t = $("#q"); t.style.height = "auto"; t.style.hei
 $("#q").addEventListener("input", autoGrow);
 $("#q").addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); askAI($("#q").value); } });
 $("#askForm").onsubmit = e => { e.preventDefault(); askAI($("#q").value); };
-$$("#suggest button").forEach(b => b.onclick = () => askAI(b.textContent));
+/* ---------- ko'p so'raladigan savollar ---------- */
+// {price}, {free}, {admin}, {channel}, {bot} — ilova ochilganda haqiqiy qiymat bilan almashtiriladi
+const FAQ = [
+  ["E'lon berish", [
+    ["Qanday e'lon beraman?", "Pastdagi «E'lon» bo'limini oching, turini tanlang (hadya, sotuv yoki reklama), rasm qo'shib, ma'lumotlarni to'ldiring va «E'lonni yuborish»ni bosing. Admin tekshirgach, e'lon {channel} kanaliga chiqadi."],
+    ["Hadyaga e'lon berish pullikmi?", "Yo'q, hadyaga e'lon butunlay bepul. Kuniga {free} tagacha bepul e'lon berish mumkin."],
+    ["Nechta rasm yoki video qo'shsa bo'ladi?", "3 tagacha rasm yoki video. Bo'sh katakchani bosib, galereyadan bir nechtasini birdaniga tanlashingiz mumkin. Video 20 MB dan oshmasin. Birinchi rasm asosiy bo'lib, e'lonning muqovasida chiqadi."],
+    ["Rasm tanlanmayapti yoki «ochib bo'lmadi» deyapti", "Rasm boshqa formatda bo'lsa, ilova uni o'zi JPEG'ga aylantiradi, buning uchun internet kerak. Baribir chiqmasa, rasmni skrinshot qilib, skrinshotni tanlang."],
+    ["Telefon raqam yoki username yozish shartmi?", "Kamida bittasi shart: telefon raqam yoki Telegram username. Ikkalasini ham yozsangiz, xaridor o'ziga qulay yo'lni tanlaydi."],
+    ["Boshqa odamning username'ini yozsam bo'ladimi?", "Yo'q. Faqat o'zingizning username'ingizni yozing. Aks holda e'lon rad etilishi mumkin."],
+    ["E'lon qachon kanalga chiqadi?", "Admin tekshirgandan keyin. E'lon qabul qilinsa ham, rad etilsa ham bot sizga xabar yuboradi."],
+    ["E'lonim nega rad etildi?", "Sababi bot xabarida va «Mening» bo'limida yozilgan bo'ladi. Ko'p uchraydigan sabablar: rasm sifatsiz yoki mushuk ko'rinmaydi, ma'lumot to'liq emas, e'lon turi noto'g'ri tanlangan (masalan, sotuv hadya deb berilgan), e'lon avval joylangan. Xatoni tuzatib, qayta yuborishingiz mumkin."],
+    ["Mushukni hadyaga deb, keyin pul so'rasa bo'ladimi?", "Yo'q. Hadya bepul degani. Pul evaziga bermoqchi bo'lsangiz, «Sotuv» turini tanlang. Bunday holatlar haqida shikoyat qilinsa, e'lon yopiladi."],
+    ["Nega yangi e'lon bera olmayapman?", "Kuniga {free} tadan ortiq bepul e'lon berib bo'lmaydi. Yoki tekshiruvni kutayotgan e'lonlaringiz juda ko'p (5 ta). Ular ko'rib chiqilgach, yana bera olasiz."],
+  ]],
+  ["Sotuv va reklama, to'lov", [
+    ["Sotuv yoki reklama e'loni necha pul?", "{price}. Pul faqat admin e'loningizni ma'qullagandan keyin to'lanadi."],
+    ["Qanday to'layman?", "Admin ma'qullagach, bot sizga karta raqami va summani yuboradi. Pulni o'tkazing va to'lov chekining rasmini (skrinshotini) shu botga yuboring."],
+    ["To'lovga qancha vaqt beriladi?", "48 soat. Muddat tugashiga 24 soat qolganda bot eslatadi. 48 soat ichida chek yuborilmasa, e'lon bekor bo'ladi."],
+    ["Chek yubordim, keyin nima bo'ladi?", "Admin pul tushganini tekshiradi va e'lon kanalga chiqadi. Bot sizga xabar beradi."],
+    ["Chek noto'g'ri deyildi, nima qilay?", "To'g'ri chek rasmini (summa va sana ko'rinib turgan) botga qayta yuboring. Pul o'tkazgan bo'lsangiz-u, muammo hal bo'lmasa, {admin} ga yozing."],
+    ["Reklama e'loniga nima yozsa bo'ladi?", "Mushuklarga oid mahsulot va xizmatlar: ozuqa, aksessuar, veterinariya, parvarish xizmati. Tavsif 300 belgigacha. Narxi sotuv e'loni bilan bir xil: {price}."],
+  ]],
+  ["Mening e'lonlarim", [
+    ["E'lonlarimni qayerdan ko'raman?", "Pastdagi «Mening» bo'limida. U yerda har bir e'lonning holati yozilgan: tekshiruvda, to'lov kutilmoqda, kanalda, rad etildi va hokazo."],
+    ["Mushuk berildi, nima qilay?", "«Mening» bo'limida e'lon ostidagi «Berildi» tugmasini bosing (sotuvda «Sotildi»). Kanaldagi post belgilanadi va kontaktlaringiz olib tashlanadi, sizni boshqa bezovta qilishmaydi."],
+    ["«Dolzarb emas» tugmasi nima uchun?", "Mushukni bermaydigan yoki sotmaydigan bo'lsangiz bosing. E'lon yopiladi, kanaldagi post «Dolzarb emas» deb tahrirlanadi va kontaktlaringiz olib tashlanadi."],
+    ["Adashib «Berildi»ni bosib qo'ydim", "E'lonni faqat admin qayta faol qila oladi. {admin} ga e'lon raqamini (#123 kabi) yozing."],
+    ["E'lonimni o'zgartirsam bo'ladimi?", "Joylangan e'lonni admin tahrirlaydi. {admin} ga e'lon raqami va nimani o'zgartirish kerakligini yozing."],
+    ["Bot «Hali dolzarbmi?» deb so'radi", "E'lon kanalda 30 kun turgach, bot shunday so'raydi. Mushuk hali sizda bo'lsa «Ha, hali dolzarb»ni bosing, e'lon yana 30 kun qoladi. 3 kun ichida javob bo'lmasa, e'lon «Dolzarb emas» deb yopiladi."],
+  ]],
+  ["Mushuk olish va xavfsizlik", [
+    ["O'zimga yaqin mushukni qanday topaman?", "«Qidirish» bo'limida hudud va tumaningizni tanlang. Hadya, sotuv yoki reklama bo'yicha ham saralash mumkin."],
+    ["Egasi bilan qanday bog'lanaman?", "E'lonni oching: telefon raqam yoki Telegram tugmasi chiqadi. Kontaktlar faqat ilova bot orqali, Telegram ichida ochilganda ko'rinadi."],
+    ["Nega kontakt ko'rinmayapti?", "Ilovani brauzerda emas, {bot} orqali Telegram ichida oching. E'lon yopilgan (berilgan yoki sotilgan) bo'lsa ham kontakt ko'rsatilmaydi."],
+    ["Hadya mushuk uchun oldindan pul so'rashyapti", "Ehtiyot bo'ling, bu firibgarlik belgisi. Mushukni ko'rmasdan pul o'tkazmang: «yo'l kirasi», «emlash puli» kabi bahonalar ko'p uchraydi. E'londagi «Shikoyat qilish» tugmasini bosing."],
+    ["Shubhali e'lonni qanday xabar qilaman?", "E'lonni oching va «Shikoyat qilish»ni bosib, sababini tanlang. Bir nechta odam shikoyat qilsa, e'lon admin tekshirguncha ilovadan yashiriladi."],
+    ["Dostafka (yetkazib berish) bormi?", "Bu e'lon egasiga bog'liq. E'londa «Dostafka: Bor / Yo'q / Kelishiladi» deb yozilgan bo'ladi, tafsilotini egasi bilan kelishib oling."],
+    ["Mushuk olishdan oldin nimaga e'tibor beray?", "Mushukni o'z ko'zingiz bilan ko'ring: ko'zi va burni toza, juni yaltiroq, harakatchan bo'lsin. Yoshi, emlangan-emlanmagani va nima yeyishini so'rang. Olgach, bir hafta ichida veterinarga ko'rsating."],
+  ]],
+  ["Mushuk parvarishi", [
+    ["Kichik mushukcha nima yeydi?", "1–2 oylik mushukchaga mushukcha uchun maxsus ho'l yoki quruq ozuqa («kitten») kuniga 4–5 marta oz-ozdan beriladi. Toza suv doim tursin. Sigir suti bermang: ko'p mushuklarda ich ketishiga sabab bo'ladi."],
+    ["Mushukka nimalar mumkin emas?", "Shokolad, piyoz, sarimsoq, uzum va mayiz, achchiq va sho'r ovqat, suyak (ayniqsa tovuq suyagi), odam dorilari. Bular zaharli yoki xavfli."],
+    ["Lotokka (tuvakka) qanday o'rgataman?", "Lotokni tinch, ovqatdan uzoq joyga qo'ying. Ovqatdan va uyqudan keyin mushukchani lotokka olib boring. Lotokni har kuni tozalang. Urushmang: xato joyni hidi qolmasligi uchun yaxshilab yuving."],
+    ["Mushukni qachon emlash kerak?", "Odatda birinchi emlash 8–9 haftalikda, ikkinchisi 3–4 hafta o'tib qilinadi, quturishga qarshi esa 12 haftalikdan keyin. Emlashdan 10–14 kun oldin gijjaga qarshi dori beriladi. Aniq jadvalni veterinar belgilaydi."],
+    ["Sterilizatsiya qachon qilinadi?", "Ko'pincha 5–6 oylikdan boshlab. Bu keraksiz nasl, kuyikish paytidagi bezovtalik va ayrim kasalliklarning oldini oladi. Veterinar bilan maslahatlashing."],
+    ["Mushukni cho'miltirish kerakmi?", "Ko'p hollarda yo'q, mushuk o'zini o'zi tozalaydi. Juda kirlangandagina mushuklar uchun shampun bilan iliq suvda yuving va yaxshilab quriting."],
+    ["Yangi mushuk uyga o'rganmayapti", "Birinchi kunlarda uni bitta tinch xonada lotok, suv va ovqat bilan qoldiring. Majburlab ushlamang, o'zi yaqinlashsin. Odatda 1–2 haftada o'rganib ketadi."],
+    ["Qachon zudlik bilan veterinarga borish kerak?", "Mushuk bir kundan ortiq ovqat yemasa, qayta-qayta qusa yoki ichi ketsa, siyolmasa, nafas olishi qiyin bo'lsa, jarohat olsa yoki zaharlangan deb o'ylasangiz. Bunday holatlarda kutmang."],
+  ]],
+];
+const faqNorm = t => String(t).toLowerCase().replace(/[ʻʼ'‘’`]/g, "").replace(/\s+/g, " ").trim();
+function faqText(t) {
+  return t.replace(/\{price\}/g, CONFIG.price_text || "").replace(/\{free\}/g, CONFIG.free_per_day || 3)
+    .replace(/\{admin\}/g, CONFIG.admin ? "@" + CONFIG.admin : "adminga")
+    .replace(/\{channel\}/g, CONFIG.channel || "").replace(/\{bot\}/g, CONFIG.bot ? "@" + CONFIG.bot : "bot");
+}
+function renderFaq() {
+  $("#faq").innerHTML = FAQ.map(([cat, items]) => `<div class="faq-group"><div class="faq-cat">${esc(cat)}</div>${items.map(([q, a]) => {
+    const A = faqText(a);
+    return `<details class="faq-item" data-s="${esc(faqNorm(cat + " " + q + " " + A))}"><summary>${esc(q)}</summary><div class="ans">${linkify(A)}</div></details>`;
+  }).join("")}</div>`).join("");
+  filterFaq();
+}
+function filterFaq() {
+  const words = faqNorm($("#faqQ").value).split(" ").filter(Boolean);
+  let shown = 0;
+  $$("#faq .faq-group").forEach(g => {
+    let n = 0;
+    g.querySelectorAll(".faq-item").forEach(d => {
+      const ok = words.every(w => d.dataset.s.includes(w));
+      d.hidden = !ok; n += ok;
+    });
+    g.hidden = !n; shown += n;
+  });
+  $("#faqNone").hidden = shown > 0;
+}
+$("#faqQ").addEventListener("input", filterFaq);
+$("#faqToAi").onclick = () => {
+  $("#q").value = $("#faqQ").value; autoGrow();
+  $("#aiTitle").scrollIntoView({behavior: "smooth", block: "start"});
+  $("#q").focus();
+};
+renderFaq();
 
 
 /* ---------- Navbat: kutayotgan e'lonlar va to'lov cheklari (faqat admin) ---------- */
@@ -1332,6 +1431,7 @@ document.addEventListener("click", e => {
   fillRegions($("#region"), "Tanlang…");
   $$(".js-price").forEach(e => e.textContent = CONFIG.price_text);
   $$(".js-admin").forEach(e => e.hidden = !CONFIG.admin);
+  renderFaq();
   $("#tg_username").value = myUsername();
   search();
   // Ulashilgan e'lon: bot tugmasi #l123 bilan ochadi; t.me/<bot>/<app>?startapp=l123 bo'lsa start_param keladi

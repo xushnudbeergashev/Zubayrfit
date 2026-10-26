@@ -108,3 +108,9 @@ Botda har bir adminda **bitta** yig'ma xabar turadi: "📥 Tekshiruvni kutmoqda:
 **Tinch soatlar** (standart 23:00–08:00, Toshkent vaqti) Admin panel → Bildirishnomalar bo'limida o'zgartiriladi yoki o'chiriladi. Bu vaqtda xabar ovozsiz keladi. Tinch soatlar tugagach, navbatda so'rov qolgan bo'lsa, ovozli eslatma beriladi.
 
 Foydalanuvchi yuborgan rasmlar Telegram'ga yuklanishi uchun birinchi admin chatiga ovozsiz yuklanib, darhol o'chiriladi. Xohlasangiz, buning o'rniga maxfiy guruh yoki kanalning **raqamli ID'sini** (masalan `-1001234567890`, taklif havolasi emas) `STORAGE_CHAT` (Text) o'zgaruvchisiga yozing. Rasmlar o'sha yerga yuklanadi va o'chirilmaydi. ID'ni bilish uchun botni o'sha guruhga qo'shib, `/chatid` deb yozing. Qiymat noto'g'ri bo'lsa, rasmlar admin chatiga yuklanaveradi.
+
+## Savol-javob bo'limi
+
+"Savol" bo'limining tepasida ko'p so'raladigan savollar turadi (e'lon berish, to'lov, mening e'lonlarim, xavfsizlik, mushuk parvarishi). Savol bosilsa javobi ochiladi, yana bosilsa yopiladi. Tepadagi qidiruv savollarni so'z bo'yicha saralaydi. Pastda esa ro'yxatda yo'q savollar uchun AI yordamchi qoladi.
+
+Savollar `src/index.html` ichidagi `FAQ` ro'yxatida. Javobdagi `{price}`, `{free}`, `{admin}`, `{channel}`, `{bot}` ilova ochilganda haqiqiy narx, admin va kanal bilan almashtiriladi, shuning uchun narx o'zgarsa javobni tahrirlash shart emas.
