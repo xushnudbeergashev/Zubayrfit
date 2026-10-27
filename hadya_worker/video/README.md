@@ -45,3 +45,15 @@ Telefon raqamlar videoda ataylab soxta (`+998 00 000 00 00`) qilingan. Haqiqiy o
 | `make-cats.mjs` | Chizilgan namuna mushuk rasmlari (`cats-demo/`) |
 | `make-voice.py` | Ovozli izoh (erkak ovozi) |
 | `mix-audio.py` | Ovoz va musiqani aralashtirish |
+
+## 30 soniyalik reklama (ElevenLabs ovozi)
+
+`stage-ad.html` — reklama varianti: kirish, bot, bir nechta rasm tanlash, qidiruv, admin tekshiruvi, «Berildi», savol-javob va yakun. Sahnalar ovozdagi gaplarga `--starts` bilan moslanadi.
+
+Ovoz: ElevenLabs, `eleven_v4`, «Bekzod» (o'zbekcha erkak ovozi). Tayyor ovoz `out/voice-reklama.wav` ga qo'yiladi.
+
+```bash
+node capture-app.mjs
+node render.mjs --stage stage-ad.html --len 30 --starts 0,2.08,5.3,10.14,13.56,17.62,21.52,24.99 \
+  --voice out/voice-reklama.wav --name hadya-reklama-30s      # → out/hadya-reklama-30s.mp4
+```

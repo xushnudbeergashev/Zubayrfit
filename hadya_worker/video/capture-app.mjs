@@ -156,12 +156,13 @@ await page.click('nav button[data-view="new"]');
 await page.screenshot({ path: path.join(shots, "nav-new.png"), clip: { x: 0, y: 844 - 96, width: 390, height: 96 } });
 await shoot(page, "new-types", { hadya: '.type[data-kind="hadya"]' });
 await page.click('.type[data-kind="hadya"]');
-for (const [i, n] of [[0, 1], [1, 5]]) {
-  // fayl tanlash oynasi o'rniga rasm to'g'ridan-to'g'ri input'ga beriladi (slotIdx — ilovadagi o'zgaruvchi)
-  await page.evaluate((i) => { slotIdx = i; }, i);
-  await page.setInputFiles("#file", path.join(dir, "cats", `${n}.jpg`));
-  await page.waitForTimeout(300);
-}
+await shoot(page, "form-empty", { slot0: '.slot[data-i="0"]' });
+// Bir nechta rasm birdaniga tanlanadi (galereyadagi kabi)
+const [chooser] = await Promise.all([page.waitForEvent("filechooser"), page.click('.slot[data-i="0"]')]);
+await chooser.setFiles([1, 5, 3].map((n) => path.join(dir, "cats", `${n}.jpg`)));
+await page.waitForFunction(() => !picking);
+await page.waitForTimeout(300);
+await shoot(page, "form-pics", { slots: ".slots" });
 await page.fill("#breed", "Oddiy");
 await page.fill("#age", "2 oylik");
 await page.click('label[for="g-f"]');
@@ -176,9 +177,14 @@ await shoot(page, "form", { slots: ".slots", contact: "#f-contact" });
 
 await page.click('nav button[data-view="ask"]');
 await page.screenshot({ path: path.join(shots, "nav-ask.png"), clip: { x: 0, y: 844 - 96, width: 390, height: 96 } });
-await page.click("#suggest button");
-await page.waitForTimeout(800);
-await shoot(page, "ask", { answer: ".bubble.ai" });
+await shoot(page, "faq", { q1: ".faq-item:nth-of-type(2) summary", search: ".faq-search" });
+await page.click(".faq-item:nth-of-type(2) summary");
+await page.waitForTimeout(400);
+await shoot(page, "faq-open", { ans: ".faq-item:nth-of-type(2) .ans" });
+await page.evaluate(() => { document.querySelectorAll(".faq-item[open]").forEach((d) => d.open = false); askAI("2 oylik mushukchani nima bilan boqish kerak?"); });
+await page.waitForTimeout(900);
+await page.evaluate(() => document.querySelector("#aiTitle").scrollIntoView());
+await shoot(page, "ask", { answer: ".bubble.ai", title: "#aiTitle" });
 
 await page.click('nav button[data-view="my"]');
 await page.screenshot({ path: path.join(shots, "nav-my.png"), clip: { x: 0, y: 844 - 96, width: 390, height: 96 } });

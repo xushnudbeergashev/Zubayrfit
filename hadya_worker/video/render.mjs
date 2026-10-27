@@ -6,6 +6,8 @@
 //   --demo 0  → «namuna e'lonlar» yozuvini olib tashlaydi (haqiqiy rasmlar qo'yilgandan keyin)
 //   --music soft|pop  → musiqa uslubi (standart: soft)
 //   --voice out/voice.wav  → ovozli izoh qo'shiladi (make-voice.py yaratadi), musiqa gap paytida pasayadi
+//   --stage stage-ad.html --starts 0,2.6,...  → reklama varianti (sahnalar ovozdagi gaplarga moslanadi)
+//   --name hadya-reklama  → chiqish fayli nomi
 import fs from "node:fs";
 import path from "node:path";
 import { spawn, execFileSync } from "node:child_process";
@@ -18,6 +20,8 @@ const LEN = Number(arg("len", 30));
 const FPS = 30;
 const DEMO = arg("demo", "1");
 const stills = arg("stills", "");
+const STAGE = arg("stage", "stage.html");
+const STARTS = arg("starts", "");
 const out = path.join(dir, "out");
 fs.mkdirSync(out, { recursive: true });
 
@@ -27,7 +31,7 @@ page.on("console", (m) => m.type() === "log" && console.log("[sahna]", m.text())
 page.on("pageerror", (e) => console.log("[xato]", e.message));
 const boxes = JSON.parse(fs.readFileSync(path.join(dir, "shots/boxes.json"), "utf8"));
 await page.addInitScript((b) => { window.BOXES = b; }, boxes);
-await page.goto(pathToFileURL(path.join(dir, "stage.html")).href + `?render=1&len=${LEN}&demo=${DEMO}`);
+await page.goto(pathToFileURL(path.join(dir, STAGE)).href + `?render=1&len=${LEN}&demo=${DEMO}` + (STARTS ? `&starts=${STARTS}` : ""));
 await page.evaluate(() => window.preload());
 
 if (stills) {
@@ -52,7 +56,7 @@ if (VOICE) {
   execFileSync("python3", [path.join(dir, "mix-audio.py"), music, path.resolve(VOICE), audio], { stdio: "inherit" });
 }
 
-const file = path.join(out, `hadya-${LEN}s${VOICE ? "-ovozli" : ""}.mp4`);
+const file = path.join(out, `${arg("name", `hadya-${LEN}s${VOICE ? "-ovozli" : ""}`)}.mp4`);
 const ff = spawn("ffmpeg", ["-y", "-loglevel", "error", "-f", "image2pipe", "-framerate", String(FPS), "-i", "-", "-i", audio,
   "-c:v", "libx264", "-preset", "slow", "-crf", "18", "-pix_fmt", "yuv420p", "-r", String(FPS),
   // ijtimoiy tarmoqlar uchun standart balandlik (-14 LUFS)
