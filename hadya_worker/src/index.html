@@ -244,6 +244,16 @@ nav button.on{background:var(--lemon);color:var(--ink)}
 .modal{width:100%;max-width:520px;max-height:calc(var(--tg-viewport-height,100vh) * .92);overflow:auto;background:var(--paper);border:2px solid var(--ink);border-bottom:0;border-radius:28px 28px 0 0;
   padding:22px 16px calc(16px + env(safe-area-inset-bottom,0px));animation:slideUp .26s cubic-bezier(.2,.9,.3,1.1)}
 .mbg.center .modal{border-bottom:2px solid var(--ink);border-radius:28px;box-shadow:0 8px 0 var(--ink);animation:none}
+.mbg.plain{animation:none}
+.cbox{width:100%;max-width:400px;background:var(--paper);border:2px solid var(--ink);border-radius:28px;box-shadow:0 8px 0 var(--ink);padding:22px 18px 18px;text-align:center}
+.cbox .cicon{width:72px;height:72px;margin:-58px auto 12px;border-radius:50%;background:var(--lemon);border:2px solid var(--ink);box-shadow:0 4px 0 var(--ink);
+  display:grid;place-items:center;font-size:34px;line-height:1}
+.cbox .cicon.danger{background:#FFE0E6}
+.cbox h2{font-size:20px;margin-bottom:8px}
+.cbox .lead{margin:0 0 6px;font-size:14.5px;line-height:1.45}
+.cbox .lead b{color:var(--ink)}
+.cbox .mbtns{margin-top:18px}
+.mbg.center:has(.cbox){padding-top:56px}
 .modal h2{font-size:20px;margin-bottom:6px}
 .modal .lead{margin:0 0 14px}
 .mbtns{display:flex;gap:10px;margin-top:16px}
@@ -553,36 +563,24 @@ function openModal(html, {center = false} = {}) {
   const close = () => { bg.remove(); updateMainButton(); };
   return {el: bg.querySelector(".modal"), bg, close};
 }
-// Tasdiqlash oynasi → Promise<boolean>
-// HTML matndan oddiy matn (Telegram oynasi uchun)
-function plainText(html) {
-  const d = document.createElement("div");
-  d.innerHTML = String(html).replace(/<br\s*\/?>/gi, "\n");
-  return d.textContent.trim();
-}
-function confirmBox({title, text = "", ok = "Ha", cancel = "Bekor qilish", danger = false, extra = ""}) {
-  // Telegram ichida oddiy savol Telegram'ning o'z oynasida chiqadi: ba'zi Android telefonlarda
-  // HTML oyna ko'rinmay qolib, ekran faqat qorayib turardi
-  if (!extra && tg?.showPopup && tg.isVersionAtLeast?.("6.2")) {
-    return new Promise(res => {
-      try {
-        tg.showPopup({title: title.slice(0, 64), message: (plainText(text) || title).slice(0, 256), buttons: [
-          {id: "no", type: "default", text: cancel.slice(0, 64)},
-          {id: "yes", type: danger ? "destructive" : "default", text: ok.slice(0, 64)}]},
-          id => { if (id === "yes") haptic("success"); res(id === "yes"); });
-      } catch { res(htmlConfirm({title, text, ok, cancel, danger, extra})); }
-    });
-  }
-  return htmlConfirm({title, text, ok, cancel, danger, extra});
-}
-function htmlConfirm({title, text, ok, cancel, danger, extra}) {
+// Tasdiqlash oynasi → Promise<boolean | element>. Ilova dizaynida, lekin animatsiyasiz va ichki aylantirishsiz:
+// ba'zi Android telefonlarda shaffoflikdan paydo bo'ladigan oyna ko'rinmay qolib, ekran faqat qorayib turardi.
+// Qora joyga bosilsa — oyna yopiladi («Yo'q» bilan bir xil).
+function confirmBox({title, text = "", ok = "Ha", cancel = "Bekor qilish", danger = false, extra = "", icon = ""}) {
   return new Promise(res => {
-    const m = openModal(`<h2>${esc(title)}</h2>${text ? `<p class="lead">${text}</p>` : ""}${extra}
-      <div class="mbtns"><button class="btn ghost" data-no>${esc(cancel)}</button><button class="btn${danger ? " danger" : ""}" data-yes>${esc(ok)}</button></div>`, {center: true});
-    const done = v => { const box = m.el; m.close(); res(v ? box : false); };
-    m.el.querySelector("[data-no]").onclick = () => done(false);
-    m.el.querySelector("[data-yes]").onclick = () => { haptic("success"); done(true); };
-    m.bg.onclick = e => { if (e.target === m.bg) done(false); };
+    const bg = document.createElement("div");
+    bg.className = "mbg center plain";
+    bg.innerHTML = `<div class="cbox" role="dialog" aria-modal="true">
+      <div class="cicon${danger ? " danger" : ""}">${icon || (danger ? "⚠️" : "❔")}</div>
+      <h2>${esc(title)}</h2>${text ? `<p class="lead">${text}</p>` : ""}${extra}
+      <div class="mbtns"><button class="btn ghost" data-no>${esc(cancel)}</button><button class="btn${danger ? " danger" : ""}" data-yes>${esc(ok)}</button></div></div>`;
+    document.body.append(bg);
+    if (inTg) tg.MainButton.hide();
+    const box = bg.firstElementChild;
+    const done = v => { bg.remove(); updateMainButton(); res(v ? box : false); };
+    box.querySelector("[data-no]").onclick = () => done(false);
+    box.querySelector("[data-yes]").onclick = () => { haptic("success"); done(true); };
+    bg.onclick = e => { if (e.target === bg) done(false); };
   });
 }
 const ask = m => confirmBox({title: "Tasdiqlang", text: esc(m)});
@@ -733,7 +731,7 @@ function bindAdminBox(j) {
     if (a === "edit") return editListing(j);
     if (a === "delete") {
       const box = await confirmBox({title: "E'lonni o'chirasizmi?", text: `<b>#${j.id} · ${esc(j.title)}</b><br>E'lon ilovadan olib tashlanadi.`,
-        ok: "O'chirish", cancel: "Bekor qilish", danger: true,
+        ok: "O'chirish", cancel: "Bekor qilish", danger: true, icon: "🗑️",
         extra: j.post ? `<label class="check"><input type="checkbox" id="delCh"><span>Kanaldagi postni ham o'chirish<br><small class="sub">Bot kanalda «Xabarlarni o'chirish» huquqiga ega bo'lishi kerak</small></span></label>` : ""});
       if (!box) return;
       const r = await adminPost(j.id, "delete", {channel: !!box.querySelector("#delCh")?.checked});
@@ -1130,6 +1128,7 @@ async function loadMy() {
           : `E'lon yopiladi. Kanaldagi post «${s === "given" ? "Berildi" : "Sotildi"}» deb belgilanadi, kontaktlaringiz olib tashlanadi.`) +
           "<br><br>Adashib bosgan bo'lsangiz, «Yo'q»ni bosing.",
         ok: {given: "Ha, berildi", sold: "Ha, sotildi", closed: "Ha, dolzarb emas"}[s], cancel: "Yo'q",
+        icon: {given: "🏠", sold: "🤝", closed: "⛔️"}[s],
       });
       if (!ok) return;
       const r = await api(`api/my/${it.id}/close`, {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({status: b.dataset.s})});
@@ -1381,7 +1380,8 @@ async function decide(it, act, card) {
       pay_ok: ["Pul tushdimi?", "E'lon darhol kanalga joylanadi.", "Ha, joylash"],
       pay_no: ["Chek noto'g'rimi?", "Foydalanuvchidan to'g'ri chekni qayta yuborish so'raladi.", "Ha, rad etish"],
     }[act];
-    if (!await confirmBox({title: t[0], text: `<b>#${it.id} · ${esc(it.title)}</b><br>${t[1]}`, ok: t[2], cancel: "Yo'q", danger: act === "pay_no"})) return;
+    if (!await confirmBox({title: t[0], text: `<b>#${it.id} · ${esc(it.title)}</b><br>${t[1]}`, ok: t[2], cancel: "Yo'q", danger: act === "pay_no",
+      icon: {approve: "✅", pay_ok: "💰", pay_no: "⚠️"}[act]})) return;
   }
   card.querySelectorAll("button").forEach(b => b.disabled = true);
   const r = await api(`api/admin/queue/${it.id}`, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({action: act, reason})});
