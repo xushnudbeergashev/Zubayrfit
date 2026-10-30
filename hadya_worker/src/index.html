@@ -243,7 +243,7 @@ nav button.on{background:var(--lemon);color:var(--ink)}
 .mbg.center{align-items:center;padding:20px}
 .modal{width:100%;max-width:520px;max-height:calc(var(--tg-viewport-height,100vh) * .92);overflow:auto;background:var(--paper);border:2px solid var(--ink);border-bottom:0;border-radius:28px 28px 0 0;
   padding:22px 16px calc(16px + env(safe-area-inset-bottom,0px));animation:slideUp .26s cubic-bezier(.2,.9,.3,1.1)}
-.mbg.center .modal{border-bottom:2px solid var(--ink);border-radius:28px;box-shadow:0 8px 0 var(--ink);animation:popIn .32s cubic-bezier(.2,.9,.3,1.25)}
+.mbg.center .modal{border-bottom:2px solid var(--ink);border-radius:28px;box-shadow:0 8px 0 var(--ink);animation:none}
 .modal h2{font-size:20px;margin-bottom:6px}
 .modal .lead{margin:0 0 14px}
 .mbtns{display:flex;gap:10px;margin-top:16px}
@@ -270,7 +270,7 @@ nav button.on{background:var(--lemon);color:var(--ink)}
 .check input{width:22px;height:22px;flex:0 0 auto;accent-color:var(--ink)}
 @keyframes fadeIn{from{opacity:0}}
 @keyframes slideUp{from{transform:translateY(60%)}}
-@keyframes popIn{from{transform:scale(.6);opacity:0}}
+@keyframes popIn{from{transform:scale(.6)}}
 @keyframes draw{to{stroke-dashoffset:0}}
 @media (prefers-reduced-motion:reduce){.mbg,.modal,.okmark,.okmark svg{animation:none!important;stroke-dashoffset:0}}
 
@@ -323,7 +323,8 @@ nav button{position:relative}
 .qempty span{display:block;font-size:34px;margin-bottom:6px}
 .zoom{width:100%;border-radius:14px;border:2px solid var(--ink);display:block}
 .toast{position:fixed;left:50%;top:calc(var(--tg-viewport-stable-height,100dvh) - 96px - env(safe-area-inset-bottom,0px));transform:translate(-50%,-100%);z-index:60;background:var(--ink);color:#fff;
-  padding:12px 18px;border-radius:14px;font-weight:700;font-size:14px;max-width:calc(100% - 32px);box-shadow:0 8px 20px -8px rgba(0,0,0,.5);animation:popIn .25s}
+  padding:12px 18px;border-radius:14px;font-weight:700;font-size:14px;max-width:calc(100% - 32px);box-shadow:0 8px 20px -8px rgba(0,0,0,.5);animation:toastIn .25s}
+@keyframes toastIn{from{transform:translate(-50%,-100%) scale(.8)}}
 
 /* --- admin --- */
 .queue .q{display:flex;gap:10px;align-items:center;border-bottom:1.5px solid var(--line);padding:10px 0}
@@ -553,7 +554,28 @@ function openModal(html, {center = false} = {}) {
   return {el: bg.querySelector(".modal"), bg, close};
 }
 // Tasdiqlash oynasi → Promise<boolean>
+// HTML matndan oddiy matn (Telegram oynasi uchun)
+function plainText(html) {
+  const d = document.createElement("div");
+  d.innerHTML = String(html).replace(/<br\s*\/?>/gi, "\n");
+  return d.textContent.trim();
+}
 function confirmBox({title, text = "", ok = "Ha", cancel = "Bekor qilish", danger = false, extra = ""}) {
+  // Telegram ichida oddiy savol Telegram'ning o'z oynasida chiqadi: ba'zi Android telefonlarda
+  // HTML oyna ko'rinmay qolib, ekran faqat qorayib turardi
+  if (!extra && tg?.showPopup && tg.isVersionAtLeast?.("6.2")) {
+    return new Promise(res => {
+      try {
+        tg.showPopup({title: title.slice(0, 64), message: (plainText(text) || title).slice(0, 256), buttons: [
+          {id: "no", type: "default", text: cancel.slice(0, 64)},
+          {id: "yes", type: danger ? "destructive" : "default", text: ok.slice(0, 64)}]},
+          id => { if (id === "yes") haptic("success"); res(id === "yes"); });
+      } catch { res(htmlConfirm({title, text, ok, cancel, danger, extra})); }
+    });
+  }
+  return htmlConfirm({title, text, ok, cancel, danger, extra});
+}
+function htmlConfirm({title, text, ok, cancel, danger, extra}) {
   return new Promise(res => {
     const m = openModal(`<h2>${esc(title)}</h2>${text ? `<p class="lead">${text}</p>` : ""}${extra}
       <div class="mbtns"><button class="btn ghost" data-no>${esc(cancel)}</button><button class="btn${danger ? " danger" : ""}" data-yes>${esc(ok)}</button></div>`, {center: true});
