@@ -446,6 +446,7 @@ nav button{position:relative}
       <div class="field" id="f-username"><label class="lbl" for="tg_username">Telegram username (ixtiyoriy)</label><input id="tg_username" maxlength="40" placeholder="@username" autocapitalize="off" autocorrect="off" spellcheck="false"><div class="err">Masalan: @ism_familiya — 5–32 ta lotin harf, raqam yoki _.</div></div>
       <div class="field contact-err" id="f-either"><div class="err" style="margin-top:0">Telefon raqam yoki Telegram username'dan kamida bittasini yozing.</div></div>
     </div>
+    <label class="check"><input type="checkbox" id="igOk" checked><span>E'lonim Instagram sahifamizda ham joylansin<br><small class="sub">@hadyagamushuklar — rasm, tavsif va kontaktlar bilan</small></span></label>
     <button class="btn" id="fallbackSubmit" hidden>E'lonni yuborish</button>
   </div>
 </section>
@@ -1072,7 +1073,7 @@ async function sendListing() {
   fd.append("initData", tg?.initData || ""); fd.append("kind", kind);
   ["breed", "age", "health_note", "title", "about", "region", "district", "phone", "tg_username", "extra"].forEach(id => fd.append(id, $("#" + id).value));
   fd.append("price", kind === "reklama" ? $("#rprice").value : $("#price").value);
-  fd.append("gender", val("gender")); fd.append("delivery", val("delivery"));
+  fd.append("gender", val("gender")); fd.append("delivery", val("delivery")); fd.append("ig", $("#igOk").checked ? "1" : "0");
   fd.append("health", $$('input[name="health"]:checked').map(i => i.value).join(","));
   media.filter(Boolean).forEach((m, i) => fd.append("media", m.blob, m.video ? `v${i}.mp4` : `p${i}.jpg`));
   const j = await api("api/submit", {method: "POST", body: fd});
@@ -1084,7 +1085,7 @@ function resetForm() {
   [0, 1, 2].forEach(i => setMedia(i, null));
   $$("#stepForm input:not([type=radio]):not([type=checkbox]), #stepForm textarea").forEach(e => e.value = "");
   $$("#stepForm input[type=radio], #stepForm input[type=checkbox]").forEach(e => e.checked = false);
-  $("#phone").value = "+998 "; $("#tg_username").value = myUsername(); $("#cnt").textContent = "0";
+  $("#phone").value = "+998 "; $("#tg_username").value = myUsername(); $("#cnt").textContent = "0"; $("#igOk").checked = true;
   $("#region").value = ""; fillDistricts($("#district"), "", "Avval hududni tanlang");
   $("#stepForm").hidden = true; $("#stepType").hidden = false; kind = null;
 }

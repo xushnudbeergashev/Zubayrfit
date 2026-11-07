@@ -729,3 +729,49 @@ test("STORAGE_CHAT havola bo'lsa: e'tiborsiz qoldiriladi, rasm admin chatiga yuk
   await tgUpdate({ message: { message_id: 4, from: { id: ADMIN, first_name: "Admin" }, chat: grp, text: "/chatid@hadyaga_mushuk_bot" } });
   assert.match(lastCall("sendMessage").body.text, /-100555/);
 });
+
+test("marketing: /mk kalitsiz yopiq; e'lonlar kontakt bilan; R2'ga yuklash va ochiq havola", async () => {
+  const K = { "x-marketing-key": "maxfiy-kalit-12345" };
+  assert.equal((await req("/mk/status")).status, 403);
+  assert.equal((await req("/mk/status", { headers: { "x-marketing-key": "xato" } })).status, 403);
+  let st = await reqJson("/mk/status", { headers: K });
+  assert.equal(st.r2, false);
+
+  const id = insertPublished(USER.id);
+  const j = await reqJson("/mk/listings?since=" + (id - 1), { headers: K });
+  const it = j.items.find((x) => x.id === id);
+  assert.equal(it.phone, "+998901234567");
+  assert.match(it.caption, /#hadyaga/);
+  assert.doesNotMatch(it.caption, /<b>|&amp;/, "Instagram matnida HTML bo'lmasin");
+  assert.equal(it.no_ig, false);
+
+  // R2 soxta nusxasi
+  const store = new Map();
+  const MEDIA = {
+    put: async (k, body, o) => { const buf = Buffer.from(await new Response(body).arrayBuffer()); store.set(k, { buf, type: o.httpMetadata.contentType }); return { size: buf.length }; },
+    get: async (k) => { const f = store.get(k); return f && { size: f.buf.length, httpEtag: '"e"', body: f.buf, range: null,
+      writeHttpMetadata: (h) => h.set("content-type", f.type) }; },
+    delete: async (k) => { store.delete(k); },
+  };
+  const e2 = { ...env, MEDIA };
+  const put = await (await worker.fetch(new Request(ORIGIN + "/mk/media/reel-1.mp4", { method: "PUT", headers: K, body: Buffer.from("VIDEO") }), e2, ctx)).json();
+  assert.equal(put.ok, true);
+  assert.equal(put.url, ORIGIN + "/media/reel-1.mp4");
+  const got = await worker.fetch(new Request(put.url), e2, ctx);
+  assert.equal(got.status, 200);
+  assert.equal(got.headers.get("content-type"), "video/mp4");
+  assert.equal(await got.text(), "VIDEO");
+  assert.equal((await worker.fetch(new Request(ORIGIN + "/mk/media/..%2Fx", { method: "PUT", headers: K, body: "x" }), e2, ctx)).status, 400);
+
+  // holatni eslab qolish
+  await req("/mk/state", { method: "POST", headers: K, body: { key: "ig:" + id, value: "post123" } });
+  const s = await reqJson("/mk/state?prefix=ig:", { headers: K });
+  assert.equal(s.items["ig:" + id], "post123");
+});
+
+test("forma: «Instagram'ga ham joylansin» olib tashlansa no_ig belgisi saqlanadi", async () => {
+  const u = { id: 4501, first_name: "Ig", username: "ig_test_user" };
+  const j = await reqJson("/api/submit", { method: "POST", body: hadyaForm({ __user: u, ig: "0", phone: "+998 90 111 22 33" }) });
+  assert.equal(j.ok, true, j.error);
+  assert.equal(JSON.parse(row(j.id).data).no_ig, true);
+});

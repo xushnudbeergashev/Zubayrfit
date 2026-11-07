@@ -329,6 +329,8 @@ function cleanForm(form) {
   if (username === false) return "Telegram username noto'g'ri. Masalan: @ism_familiya (5–32 ta lotin harf, raqam yoki _).";
   if (!phone && !username) return "Telefon raqam yoki Telegram username'dan kamida bittasini yozing.";
   const data = { phone: phone ? "+" + phone : null, contact_username: username || null };
+  // Egasi «Instagram'ga ham joylansin» belgisini olib tashlagan bo'lsa — Instagram'ga chiqmaydi
+  if (g("ig", 1) === "0") data.no_ig = true;
 
   if (kind === "reklama") {
     Object.assign(data, { title: g("title", 60), about: g("about", 300), price: g("price", 40), extra: g("extra", 300) });
@@ -2127,6 +2129,102 @@ async function scheduledJobs(baseEnv) {
   console.log(`Cron: ${ops.n} ta so'rov ishlatildi (chegara ${RUN_BUDGET})`);
 }
 
+// ---------------------------------------------------------------- marketing (Instagram avtomatikasi uchun)
+// /mk/* — faqat x-marketing-key sarlavhasi SETUP_KEY bilan bir xil bo'lsa ishlaydi:
+//   GET  /mk/status                  — holat (R2 ulanganmi, narx, bot, kanal)
+//   GET  /mk/listings?since=<id>     — ochiq e'lonlar kontaktlari, Instagram matni va media havolalari bilan
+//   PUT  /mk/media/<nom>             — R2'ga video/rasm yuklash → ochiq havola qaytadi
+//   DELETE /mk/media/<nom>           — R2'dan o'chirish
+//   GET  /mk/state?prefix=ig:        — Instagram'ga nimalar joylanganini eslab qolish (settings jadvalida, mk: bilan)
+//   POST /mk/state {key, value}      — value null bo'lsa o'chiriladi
+// /media/<nom> — R2'dagi faylning ochiq havolasi (Instagram videoni shu yerdan oladi)
+const MEDIA_NAME = /^[A-Za-z0-9._-]{1,120}$/;
+const MEDIA_TYPES = { mp4: "video/mp4", mov: "video/quicktime", jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp" };
+const plainCaption = (html) => html.replace(/<[^>]+>/g, "").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&amp;/g, "&");
+
+async function marketing(env, request, url, method, path) {
+  let m;
+  if (path.startsWith("/media/")) {
+    const name = decodeURIComponent(path.slice(7));
+    if (!env.MEDIA || !MEDIA_NAME.test(name) || !["GET", "HEAD"].includes(method)) return new Response("Topilmadi", { status: 404 });
+    const obj = await env.MEDIA.get(name, { range: request.headers });
+    if (!obj) return new Response("Topilmadi", { status: 404 });
+    const headers = new Headers();
+    obj.writeHttpMetadata(headers);
+    headers.set("etag", obj.httpEtag);
+    headers.set("accept-ranges", "bytes");
+    headers.set("cache-control", "public, max-age=86400");
+    let status = 200;
+    if (obj.range && request.headers.has("range")) {
+      const off = obj.range.offset ?? 0, len = obj.range.length ?? obj.size - off;
+      headers.set("content-range", `bytes ${off}-${off + len - 1}/${obj.size}`);
+      headers.set("content-length", String(len));
+      status = 206;
+    } else headers.set("content-length", String(obj.size));
+    return new Response(method === "HEAD" ? null : obj.body, { status, headers });
+  }
+
+  if (!(await setupKeyOk(env, request.headers.get("x-marketing-key")))) return err("forbidden", 403);
+  const origin = url.origin;
+
+  if (method === "GET" && path === "/mk/status") {
+    return json({ ok: true, r2: !!env.MEDIA, origin, bot: await botUsername(env).catch(() => ""),
+      channel: env.CHANNEL || "", price: await getPrice(env), price_text: fmtSum(await getPrice(env)) });
+  }
+
+  if (method === "GET" && path === "/mk/listings") {
+    const since = Number(url.searchParams.get("since") || 0);
+    const limit = Math.min(100, Number(url.searchParams.get("limit") || 50));
+    const rows = (await env.DB.prepare(
+      `SELECT * FROM listings WHERE status IN (${PUBLIC_STATUSES.map(() => "?").join(",")}) AND (id > ? OR closed_at > ?) ORDER BY id LIMIT ?`
+    ).bind(...PUBLIC_STATUSES, since, Number(url.searchParams.get("closed_since") || 0), limit).all()).results.map(parseRow);
+    const bot = await botUsername(env).catch(() => "");
+    return json({ ok: true, items: rows.map((l) => {
+      const d = l.data;
+      const text = d.raw ? String(d.raw) : plainCaption(caption(env, l, bot));
+      return {
+        id: l.id, kind: l.kind, status: l.status, region: l.region, district: l.district,
+        title: shortTitle(l), price: priceText(l),
+        phone: d.phone || null, username: l.username || d.contact_username || null,
+        imported: !!d.raw, no_ig: !!d.no_ig,
+        caption: text,
+        media: l.media.map((x, i) => ({ type: x.type, url: `${origin}/api/media/${l.id}/${i}` })),
+        channel_url: l.channel_msg_id && l.channel_username ? `https://t.me/${l.channel_username}/${l.channel_msg_id}` : null,
+        created_at: l.created_at, published_at: l.published_at, closed_at: l.closed_at,
+      };
+    }) });
+  }
+
+  if ((m = path.match(/^\/mk\/media\/(.+)$/))) {
+    if (!env.MEDIA) return err("R2 ulanmagan: Worker → Settings → Bindings → R2 bucket, nomi MEDIA.", 503);
+    const name = decodeURIComponent(m[1]);
+    if (!MEDIA_NAME.test(name)) return err("Fayl nomi faqat lotin harf, raqam, nuqta, - va _ dan iborat bo'lsin.");
+    if (method === "PUT" || method === "POST") {
+      const ext = name.split(".").pop().toLowerCase();
+      const type = request.headers.get("content-type") || MEDIA_TYPES[ext] || "application/octet-stream";
+      const obj = await env.MEDIA.put(name, request.body, { httpMetadata: { contentType: type } });
+      return json({ ok: true, name, size: obj.size, url: `${origin}/media/${encodeURIComponent(name)}` });
+    }
+    if (method === "DELETE") { await env.MEDIA.delete(name); return json({ ok: true }); }
+  }
+
+  if (path === "/mk/state") {
+    if (method === "GET") {
+      const prefix = "mk:" + (url.searchParams.get("prefix") || "");
+      const rows = (await env.DB.prepare("SELECT key, value FROM settings WHERE key >= ? AND key < ? ORDER BY key")
+        .bind(prefix, prefix + "\uffff").all()).results;
+      return json({ ok: true, items: Object.fromEntries(rows.map((r) => [r.key.slice(3), r.value])) });
+    }
+    if (method === "POST") {
+      const b = await request.json().catch(() => ({}));
+      if (!b.key || String(b.key).length > 100) return err("key kerak");
+      await setSetting(env, "mk:" + b.key, b.value === null || b.value === undefined ? null : String(b.value).slice(0, 2000));
+      return json({ ok: true });
+    }
+  }
+  return err("Topilmadi", 404);
+}
+
 // ---------------------------------------------------------------- yo'naltirish
 export default {
   async fetch(request, env, ctx) {
@@ -2152,6 +2250,7 @@ export default {
     }
 
     try {
+      if (path.startsWith("/mk/") || path.startsWith("/media/")) return await marketing(env, request, url, method, path);
       if (method === "GET" && path === "/") {
         return new Response(INDEX_HTML, { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-cache" } });
       }
