@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<title>Hadyaga story</title>
+<link rel="stylesheet" href="../video/fonts/fonts.local.css">
+<style>
+:root{--blue:#2D46F0;--lemon:#FFD84A;--ink:#12123A;--paper:#F4F1EA;--ok:#1F8A5B;
+  --display:"Unbounded","Arial Black",sans-serif;--body:"Onest",system-ui,sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1080px;height:1920px;overflow:hidden}
+body{background:var(--blue);color:#fff;font-family:var(--body);position:relative}
+.blob{position:absolute;border-radius:50%}
+.paw{position:absolute;width:110px;height:110px;opacity:.1;color:#fff}
+.brand{position:absolute;top:150px;left:0;right:0;text-align:center;font:600 34px/1 var(--display);letter-spacing:.14em}
+.kick{position:absolute;top:230px;left:50%;transform:translateX(-50%) rotate(-2deg);background:var(--lemon);color:var(--ink);
+  font:800 52px/1 var(--display);padding:26px 40px;border-radius:40px;border:6px solid var(--ink);box-shadow:0 10px 0 var(--ink);white-space:nowrap}
+.card{position:absolute;left:150px;top:400px;width:780px;background:#fff;padding:26px 26px 110px;border-radius:12px;transform:rotate(2deg);
+  box-shadow:0 30px 60px -20px rgba(0,0,0,.55)}
+.card .ph{width:728px;height:760px;background:#ddd center/cover no-repeat;border-radius:4px}
+.card .cap{position:absolute;left:0;right:0;bottom:26px;text-align:center;color:var(--ink);font:700 44px/1.1 var(--display)}
+.stamp{position:absolute;right:60px;top:880px;width:290px;height:290px;border-radius:50%;background:var(--lemon);color:var(--ink);border:8px solid var(--ink);
+  box-shadow:0 12px 0 var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;transform:rotate(-12deg)}
+.stamp b{font:800 58px/1 var(--display)}
+.stamp span{font:700 32px/1.15 var(--body);margin-top:10px}
+.info{position:absolute;left:80px;right:80px;top:1350px;text-align:center;font:700 46px/1.3 var(--body)}
+.info small{display:block;font-weight:500;font-size:36px;opacity:.9;margin-top:10px}
+.cta{position:absolute;left:110px;right:110px;bottom:150px;background:#fff;color:var(--ink);border:6px solid var(--ink);border-radius:44px;box-shadow:0 12px 0 var(--ink);
+  padding:30px 34px;text-align:center;font:700 38px/1.3 var(--body)}
+.cta b{display:block;font:800 40px/1.2 var(--display);color:var(--blue);margin-top:8px}
+body.given{background:var(--ok)}
+body.given .kick{background:#fff}
+</style>
+</head>
+<body>
+<div class="blob" style="width:900px;height:900px;background:rgba(255,255,255,.08);left:-300px;top:-250px"></div>
+<div class="blob" style="width:700px;height:700px;background:rgba(0,0,0,.1);right:-260px;bottom:-160px"></div>
+<div id="paws"></div>
+<div class="brand">🐾 HADYAGA MUSHUKLAR</div>
+<div class="kick" id="kick"></div>
+<div class="card"><div class="ph" id="ph"></div><div class="cap" id="cap"></div></div>
+<div class="stamp" id="stamp"><b id="stampB"></b><span id="stampS"></span></div>
+<div class="info" id="info"></div>
+<div class="cta" id="cta"></div>
+<script>
+const PAW = '<svg viewBox="0 0 24 24" fill="currentColor"><ellipse cx="12" cy="15.5" rx="4.6" ry="3.8"/><circle cx="6" cy="10" r="2.1"/><circle cx="18" cy="10" r="2.1"/><circle cx="9.2" cy="6" r="2"/><circle cx="14.8" cy="6" r="2"/></svg>';
+document.getElementById("paws").innerHTML = Array.from({length: 12}, (_, i) =>
+  `<div class="paw" style="left:${(i * 197) % 1000}px;top:${(i * 431) % 1880}px;transform:rotate(${(i * 53) % 360}deg)">${PAW}</div>`).join("");
+// window.STORY = {mode: "new"|"given"|"sold", photo, kind, title, place, price}
+window.fill = (s) => {
+  const $ = (id) => document.getElementById(id);
+  const esc = (t) => String(t ?? "").replace(/[&<>]/g, (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;"}[c]));
+  document.body.className = s.mode === "new" ? "" : "given";
+  $("ph").style.backgroundImage = `url("${s.photo}")`;
+  $("cap").textContent = s.mode === "new" ? (s.kind === "hadya" ? "Hadyaga · BEPUL" : s.kind === "sotuv" ? "Sotiladi" : "Reklama") : "Rahmat! ❤️";
+  if (s.mode === "new") {
+    $("kick").textContent = "🆕 Yangi e'lon";
+    $("stamp").style.display = s.kind === "hadya" ? "" : "none";
+    $("stampB").textContent = "BEPUL"; $("stampS").textContent = "hadyaga";
+    $("info").innerHTML = `${esc(s.title)}<small>📍 ${esc(s.place)}${s.kind === "sotuv" && s.price ? " · " + esc(s.price) : ""}</small>`;
+    $("cta").innerHTML = `Egasining kontakti kerakmi?<br>Postga «hadya» deb yozing 📩<b>t.me/hadyaga_mushuk_bot</b>`;
+  } else {
+    $("kick").textContent = s.mode === "sold" ? "✅ Sotildi!" : "✅ Yangi uyini topdi!";
+    $("stamp").style.display = "";
+    $("stampB").textContent = "🏠"; $("stampS").textContent = s.mode === "sold" ? "yangi egasi\ntopildi" : "yangi uy";
+    $("info").innerHTML = `${esc(s.title)}<small>📍 ${esc(s.place)}</small>`;
+    $("cta").innerHTML = `Mushukingizga ham uy kerakmi?<br>E'lon berish — bepul 🐾<b>t.me/hadyaga_mushuk_bot</b>`;
+  }
+};
+</script>
+</body>
+</html>
