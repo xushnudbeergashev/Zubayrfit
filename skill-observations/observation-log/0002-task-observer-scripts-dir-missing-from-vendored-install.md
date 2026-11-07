@@ -9,7 +9,7 @@ target_file: []
 siblings_checked: "none — task-observer belongs to no declared family (no skill-families.md yet)"
 area: "SKILL.md Session Start Protocol step 2 and How to Log (scripts/session-start-scan.sh, scripts/new-observation.sh); 'Reference files' incomplete-install check"
 date: 2026-10-15
-session_context: "Reviewing an uploaded Cloudflare Workers Telegram-bot project (zip) in a cloud session; Session Start Protocol run first per CLAUDE.md"
+session_context: "Reviewing an uploaded Cloudflare Workers Telegram-bot project (zip) in a cloud session; Session Start Protocol run first per CLAUDE.md. Recurred 2026-11-07 on a scheduled Instagram comment-check routine start."
 parked_until:
 resolved:
 resolution:
@@ -37,3 +37,8 @@ than leaving the agent to improvise.
 core instructions execute, not only the ones they read; a vendoring step
 that copies "the skill" by directory listing silently drops the parts that
 are only referenced by path.
+
+**Recurrence (2026-11-07):** Same failure on a scheduled-trigger session
+start (Instagram comment-check routine): `scripts/session-start-scan.sh` →
+"No such file or directory"; frontmatter scanned by hand with `sed`. The
+gap persists across sessions until the bundle is re-vendored.
