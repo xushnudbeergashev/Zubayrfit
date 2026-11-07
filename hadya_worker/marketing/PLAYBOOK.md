@@ -17,9 +17,13 @@ Barcha ishlar `ig.py` orqali bajariladi (`python3 ig.py <buyruq> [--dry]`).
 | 9:00, 14:00, 21:00 | Izohlar va «reklama» xabarlari | `python3 ig.py comments` |
 | 13:00 | Kanaldan 1 ta e'lon: post + story | `python3 ig.py post-listing` |
 | 19:00 | Haftalik rejadagi kontent, keyin «Berildi» story | reja bo'yicha + `python3 ig.py story-given` |
-| Yakshanba 19:00 | Haftalik hisobot va keyingi hafta rejasi (foydalanuvchiga) | `python3 ig.py report` |
+| Yakshanba 19:00 | Haftalik hisobot (jadval ko'rinishida) va keyingi hafta rejasi | `python3 ig.py report` |
 
 ## Qoidalar
+
+**Mustaqillik** (foydalanuvchi 2026-11-07 da aytgan): reja bo'yicha hammasi so'ramasdan bajariladi, har kuni tasdiq
+so'ralmaydi. Foydalanuvchiga faqat xato yoki muhim narsada yoziladi, har yakshanba esa jadval ko'rinishida hisobot
+beriladi. Telefon raqam va Telegram username Instagram'ga hech qachon yozilmaydi.
 
 **Izohlar**
 - Qiziqish bildirgan izohlarga («hadya», «menga bering», «+», «qayerda», «nomer», «mushuk»…) Direct'ga **bitta** xabar
@@ -57,7 +61,7 @@ Barcha ishlar `ig.py` orqali bajariladi (`python3 ig.py <buyruq> [--dry]`).
 | Pa 12 | 🎬 Reels «Mushukchaga mumkin bo'lmagan 5 ta ovqat», 12–15 s: shokolad, piyoz/sarimsoq, uzum/mayiz, sigir suti, suyak; oxirida bot |
 | Ju 13 | — (faqat story-given) |
 | Sh 14 | 🎬 Reels «1 daqiqada e'lon berish», 10 s: ilova ekranlari (rasm tanlash → forma → yuborish), oxirida bot |
-| Ya 15 | 📝 `ig.py report` va 2-hafta rejasi: foydalanuvchiga ko'rsatiladi, tasdiqlagach bajariladi |
+| Ya 15 | 📝 `ig.py report`: jadval ko'rinishidagi hisobot va 2-hafta rejasi (shu faylga qo'shiladi, keyin bajariladi) |
 
 Reels: 1080×1920, birinchi soniyada savol yoki mushuk yuzi (o'rtacha tomosha vaqti hozir ~7 s), ovozsiz ham
 tushunarli yozuvlar, musiqa `video/make-music.py` bilan. Yig'ish: `video/` dagi sahna/render tizimi.
