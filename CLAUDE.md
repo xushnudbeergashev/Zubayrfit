@@ -22,9 +22,13 @@ arrived as. Name what the user is deciding, then match the installed skill
 descriptions against that — a request handed over as a file to review
 still needs the skill whose description names its subject.
 
-After completing each task, list the observation records written this
-session in the same turn and report a one-line summary from that listing
-(ids and titles, or "none logged and why") — never from memory of
-writing them. This is the activation backstop: it forces a look at the log,
-so a session that silently skipped the protocol is discovered at the
-first task boundary instead of never.
+After completing each task, list the observation log with a tool in the
+same turn — never rely on memory of writing records. This is the
+activation backstop: it forces a look at the log, so a session that
+silently skipped the protocol is discovered at the first task boundary
+instead of never.
+
+Report to the user ONLY when this session wrote or changed a record:
+one line from that listing (ids and titles). When nothing new was
+logged, say nothing about the log — the user asked not to see a
+"none logged" line after every answer.
