@@ -56,7 +56,7 @@ beriladi. Telefon raqam va Telegram username Instagram'ga hech qachon yozilmaydi
 | Kun | 19:00 kontent |
 |---|---|
 | Du 9 | 🎬 Reels «Uy kutayotgan 3 mushukcha», 10–12 s: kanaldagi faol hadya e'lonlaridan 3 ta rasm, har birida zot/yosh/hudud, oxirida «Telegram: @hadyaga_mushuk_bot» |
-| Se 10 | — (faqat story-given) |
+| Se 10 | 🎬 Dushanbadan ko'chirildi: Reels «Uy kutayotgan 3 mushukcha» (9-noyabr ishchi jarayon qayta ishga tushgani sabab o'tib ketgan) |
 | Ch 11 | 📸 Karusel «Kanal orqali N ta mushuk uy topdi» (N: ilova statistikasidagi «berildi» soni), 4 slayd: raqam → 3 ta berilgan mushuk → «Siz ham e'lon bering» |
 | Pa 12 | 🎬 Reels «Mushukchaga mumkin bo'lmagan 5 ta ovqat», 12–15 s: shokolad, piyoz/sarimsoq, uzum/mayiz, sigir suti, suyak; oxirida bot |
 | Ju 13 | — (faqat story-given) |
