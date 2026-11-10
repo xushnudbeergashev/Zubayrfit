@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<title>Uy kutayotgan 3 mushukcha</title>
+<link rel="stylesheet" href="../../video/fonts/fonts.local.css">
+<style>
+:root{--blue:#2D46F0;--lemon:#FFD84A;--ink:#12123A;--paper:#F4F1EA;--display:"Unbounded","Arial Black",sans-serif;--body:"Onest",system-ui,sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1080px;height:1920px;overflow:hidden;background:var(--blue)}
+body{font-family:var(--body);color:#fff;position:relative}
+.blob{position:absolute;border-radius:50%}
+.paw{position:absolute;width:100px;height:100px;opacity:.1}
+.layer{position:absolute;inset:0;display:none}
+.brand{position:absolute;top:120px;left:0;right:0;text-align:center;font:600 32px/1 var(--display);letter-spacing:.14em;z-index:5}
+/* kirish */
+#hook .t{position:absolute;left:60px;right:60px;text-align:center;font:800 118px/1.02 var(--display);letter-spacing:-.02em}
+#hook .t span{display:inline-block;background:var(--lemon);color:var(--ink);padding:4px 26px;border-radius:24px;box-shadow:0 10px 0 var(--ink)}
+.av{position:absolute;width:250px;height:250px;border-radius:50%;border:9px solid #fff;background:#ccc center/cover;box-shadow:0 20px 40px -12px rgba(0,0,0,.5)}
+/* mushuk kartochkasi */
+.card{position:absolute;left:110px;top:330px;width:860px;background:#fff;padding:28px 28px 30px;border-radius:14px;box-shadow:0 34px 70px -24px rgba(0,0,0,.6)}
+.card .ph{width:804px;height:900px;background:#ddd center/cover no-repeat;border-radius:6px}
+.card .num,.card .free{z-index:2}
+.card .num{position:absolute;left:-30px;top:-40px;width:150px;height:150px;border-radius:50%;background:var(--lemon);color:var(--ink);border:7px solid var(--ink);
+  box-shadow:0 8px 0 var(--ink);display:grid;place-items:center;font:800 64px/1 var(--display)}
+.card .free{position:absolute;right:-26px;top:760px;background:var(--lemon);color:var(--ink);border:6px solid var(--ink);border-radius:30px;padding:16px 28px;
+  font:800 46px/1 var(--display);transform:rotate(-8deg);box-shadow:0 8px 0 var(--ink)}
+.card .tt{color:var(--ink);font:800 50px/1.15 var(--display);margin-top:26px}
+.card .pl{color:#6A6A8A;font:600 36px/1.3 var(--body);margin-top:10px}
+/* yakun */
+#cta .q{position:absolute;left:70px;right:70px;top:420px;text-align:center;font:800 92px/1.08 var(--display);letter-spacing:-.02em}
+#cta .q b{color:var(--lemon)}
+#cta .box{position:absolute;left:110px;right:110px;top:900px;background:#fff;color:var(--ink);border:6px solid var(--ink);border-radius:44px;box-shadow:0 12px 0 var(--ink);
+  padding:40px 30px;text-align:center;font:700 42px/1.35 var(--body)}
+#cta .box b{display:block;font:800 52px/1.2 var(--display);color:var(--blue);margin-top:14px}
+#cta .hint{position:absolute;left:80px;right:80px;top:1360px;text-align:center;font:700 44px/1.35 var(--body)}
+#cta .hint span{background:var(--lemon);color:var(--ink);padding:2px 14px;border-radius:12px}
+#wipe{position:absolute;top:-200px;left:0;width:1500px;height:2400px;background:var(--lemon);z-index:20;transform:translateX(-200%) skewX(-12deg)}
+</style>
+</head>
+<body>
+<div class="blob" id="b1" style="width:900px;height:900px;background:#3E57FF;left:-300px;top:-200px"></div>
+<div class="blob" id="b2" style="width:700px;height:700px;background:#2336D8;right:-260px;bottom:-120px"></div>
+<div id="paws"></div>
+<div class="brand">🐾 HADYAGA MUSHUKLAR</div>
+<div class="layer" id="hook">
+  <div class="t" style="top:520px">Uy</div>
+  <div class="t" style="top:660px">kutayotgan</div>
+  <div class="t" style="top:820px"><span>3 mushukcha</span></div>
+</div>
+<div class="layer" id="cat"><div class="card"><div class="num" id="num">1</div><div class="ph" id="ph"></div><div class="free">BEPUL</div>
+  <div class="tt" id="tt"></div><div class="pl" id="pl"></div></div></div>
+<div class="layer" id="cta">
+  <div class="q">Shu mushuklardan<br>biriga <b>uy</b> bo'lasizmi?</div>
+  <div class="box">Barcha e'lonlar Telegram'da 👇<b>@hadyaga_mushuk_bot</b></div>
+  <div class="hint">Egasining kontakti kerakmi?<br>Izohga <span>«hadya»</span> deb yozing 📩</div>
+</div>
+<div id="wipe"></div>
+<script>
+const $ = (s) => document.querySelector(s);
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const prog = (t, s, d) => clamp((t - s) / d);
+const eOut = (x) => 1 - Math.pow(1 - x, 3);
+const eInOut = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+const eBack = (x) => { const c1 = 1.9, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
+const PAW = '<svg viewBox="0 0 24 24" fill="#fff"><ellipse cx="12" cy="15.5" rx="4.6" ry="3.8"/><circle cx="6" cy="10" r="2.1"/><circle cx="18" cy="10" r="2.1"/><circle cx="9.2" cy="6" r="2"/><circle cx="14.8" cy="6" r="2"/></svg>';
+const P = Array.from({length: 12}, (_, i) => ({x: (i * 173) % 1000, y: (i * 389) % 1920, r: (i * 47) % 360, v: 40 + (i % 4) * 20}));
+$("#paws").innerHTML = P.map(() => `<div class="paw">${PAW}</div>`).join("");
+// window.CATS = [{title, place, photo, pos}]
+const CATS = window.CATS || [];
+const SC = [["hook", 0, 1.8], ["cat", 1.8, 4.6], ["cat", 4.6, 7.4], ["cat", 7.4, 10.2], ["cta", 10.2, 12]];
+window.DURATION = 12;
+window.SCENE_STARTS = SC.slice(1).map((s) => s[1]);
+window.render = (t) => {
+  $("#b1").style.transform = `translate(${Math.sin(t * .5) * 60}px,${Math.cos(t * .4) * 50}px)`;
+  $("#b2").style.transform = `translate(${Math.cos(t * .45) * 70}px,${Math.sin(t * .35) * 60}px)`;
+  document.querySelectorAll(".paw").forEach((el, i) => { const p = P[i]; const y = ((p.y - t * p.v) % 2100 + 2100) % 2100 - 120;
+    el.style.transform = `translate(${p.x}px,${y}px) rotate(${p.r + t * 12}deg)`; });
+  const k = SC.findIndex(([, s, e]) => t >= s && t < e), i = k < 0 ? SC.length - 1 : k;
+  const [name, s, e] = SC[i], lt = t - s;
+  document.querySelectorAll(".layer").forEach((l) => (l.style.display = l.id === name ? "block" : "none"));
+  if (name === "hook") {
+    document.querySelectorAll("#hook .t").forEach((el, j) => {
+      const st = j === 0 ? -1 : -0.6 + j * 0.25, p = eBack(prog(lt, st, .5)), d = j % 2 ? 1 : -1;
+      el.style.transform = `translateX(${(1 - p) * 1100 * d}px)`; el.style.opacity = prog(lt, st, .1);
+    });
+    let av = $("#hook .avs");
+    if (!av) { av = document.createElement("div"); av.className = "avs";
+      av.innerHTML = CATS.map((c) => `<div class="av" style="background-image:url('${c.photo}');background-position:${c.pos || "center"}"></div>`).join(""); $("#hook").append(av); }
+    [[90, 1180], [415, 1290], [740, 1180]].forEach(([x, y], j) => { const el = av.children[j]; if (!el) return;
+      const p = eBack(prog(lt, .5 + j * .12, .45)); el.style.left = x + "px"; el.style.top = y + "px";
+      el.style.transform = `scale(${Math.max(0, p)}) rotate(${Math.sin(lt * 3 + j) * 6}deg)`; });
+  }
+  if (name === "cat") {
+    const n = i - 1, c = CATS[n] || {};
+    if ($("#cat").dataset.n !== String(n)) {
+      $("#cat").dataset.n = n;
+      $("#num").textContent = n + 1; $("#ph").style.backgroundImage = `url('${c.photo}')`;
+      $("#ph").style.backgroundPosition = c.pos || "center"; $("#tt").textContent = c.title; $("#pl").textContent = "📍 " + c.place;
+    }
+    const p = eOut(prog(lt, 0, .55)), out = eInOut(prog(lt, e - s - .35, .35)), d = n % 2 ? 1 : -1;
+    $("#cat .card").style.transform = `translateX(${(1 - p) * 1200 * d - out * 1200 * d}px) rotate(${(1 - p) * 8 * d + (n - 1) * 1.5}deg)`;
+    $("#ph").style.transform = `scale(${1.08 - .08 * prog(lt, 0, e - s)})`;
+    $("#cat .free").style.transform = `rotate(-8deg) scale(${Math.max(0, eBack(prog(lt, .45, .4)))})`;
+  }
+  if (name === "cta") {
+    const q = eBack(prog(lt, .05, .5)); $("#cta .q").style.transform = `scale(${.5 + .5 * q})`; $("#cta .q").style.opacity = prog(lt, .05, .12);
+    const b = eOut(prog(lt, .35, .4)); $("#cta .box").style.transform = `translateY(${(1 - b) * 400}px)`; $("#cta .box").style.opacity = b;
+    $("#cta .hint").style.opacity = prog(lt, .7, .3);
+  }
+  let w = -2;
+  for (const b of window.SCENE_STARTS) if (t > b - .28 && t < b + .28) w = (t - (b - .28)) / .56;
+  $("#wipe").style.transform = `translateX(${w < -1 ? -200 : -160 + 320 * eInOut(clamp(w))}%) skewX(-12deg)`;
+};
+</script>
+</body>
+</html>

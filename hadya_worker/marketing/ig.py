@@ -420,10 +420,11 @@ def cmd_story_given():
     mk_set(f"iggiven:L{it['id']}", "1")
 
 
-def cmd_reel(video, caption_file):
+def cmd_reel(video, caption_file, thumb_ms="1500"):
     caption = open(caption_file, encoding="utf-8").read().strip()
     url = mk_upload(video, f"reel-{int(time.time())}.mp4")
-    log("Reels joylandi:", publish(container(media_type="REELS", video_url=url, caption=caption, share_to_feed="true")))
+    mid = publish(container(media_type="REELS", video_url=url, caption=caption, share_to_feed="true", thumb_offset=str(thumb_ms)))
+    log("Reels joylandi:", mid, gget(mid, fields="permalink").get("permalink") if not DRY else "")
 
 
 def cmd_carousel(caption_file, images):
