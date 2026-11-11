@@ -943,15 +943,20 @@ async function heicToJpeg(file) {
   return Array.isArray(out) ? out[0] : out;
 }
 const bitmap = (file, opts) => createImageBitmap(file, opts).then(b => ({src: b, w: b.width, h: b.height, done: () => b.close?.()}));
-// Rasmni 1600px gacha kichraytirib JPEG qiladi. Telefonlar har xil: birinchi usul ochmasa, keyingisi sinab ko'riladi
-// (katta 50 MP rasmlarni ba'zi Android'lar faqat kichraytirib ochadi). Hech biri ochmasa, xato qaytadi, ilova qotmaydi.
+// Rasmni 1280px gacha kichraytirib JPEG qiladi (Telegram ham rasmni 1280px ga tushiradi, kattasi faqat sekinlashtiradi).
+// HD rasm (12–50 MP) to'liq ochilsa, telefon xotirasi to'lib ilova qotadi. Shuning uchun katta fayl darhol
+// kichraytirilgan holda ochiladi. Birinchi usul ishlamasa, keyingisi sinab ko'riladi; hech biri ochmasa, xato qaytadi.
 async function compress(file) {
-  const MAX = 1600, tries = [];
-  if (window.createImageBitmap) tries.push(() => bitmap(file), () => bitmap(file, {resizeWidth: MAX, resizeQuality: "medium"}));
+  const MAX = 1280, tries = [];
+  if (window.createImageBitmap) {
+    const small = () => bitmap(file, {resizeWidth: MAX, resizeQuality: "high"}), full = () => bitmap(file);
+    // Kichik fayl (<1.5 MB) kichraytirilsa, aksincha kattalashib ketishi mumkin: uni to'liq ochamiz
+    tries.push(...(file.size > 1.5 * 1024 * 1024 ? [small, full] : [full, small]));
+  }
   tries.push(() => loadImg(file));
   let img, last;
   for (const t of tries) {
-    try { img = await withTimeout(t(), 20000); if (img.w && img.h) break; img.done(); img = null; }
+    try { img = await withTimeout(t(), 15000); if (img.w && img.h) break; img.done(); img = null; }
     catch (e) { last = e; img = null; }
   }
   if (!img && isHeic(file)) {
@@ -969,12 +974,12 @@ async function compress(file) {
     const c = document.createElement("canvas");
     c.width = Math.max(1, Math.round(img.w * k)); c.height = Math.max(1, Math.round(img.h * k));
     c.getContext("2d").drawImage(img.src, 0, 0, c.width, c.height);
-    const blob = await withTimeout(new Promise(res => c.toBlob(res, "image/jpeg", 0.85)), 20000).catch(() => null);
+    const blob = await withTimeout(new Promise(res => c.toBlob(res, "image/jpeg", 0.82)), 15000).catch(() => null);
     c.width = c.height = 0; // xotirani bo'shatish
     if (blob && blob.size) return blob;
   } finally { img.done(); }
   // Siqib bo'lmadi, lekin rasm o'zi to'g'ri ochildi: mos bo'lsa asl faylni yuboramiz
-  if (file.size <= 8 * 1024 * 1024 && /^image\/(jpeg|png|webp)$/.test(file.type)) return file;
+  if (file.size <= 5 * 1024 * 1024 && /^image\/(jpeg|png|webp)$/.test(file.type)) return file;
   const e = new Error("encode"); e.detail = `${file.type}, ${(file.size / 1048576).toFixed(1)} MB`; throw e;
 }
 $("#region").onchange = () => { fillDistricts($("#district"), $("#region").value, "Tanlang…"); $("#f-region").classList.remove("bad"); };
@@ -1076,7 +1081,11 @@ async function sendListing() {
   fd.append("gender", val("gender")); fd.append("delivery", val("delivery")); fd.append("ig", $("#igOk").checked ? "1" : "0");
   fd.append("health", $$('input[name="health"]:checked').map(i => i.value).join(","));
   media.filter(Boolean).forEach((m, i) => fd.append("media", m.blob, m.video ? `v${i}.mp4` : `p${i}.jpg`));
-  const j = await api("api/submit", {method: "POST", body: fd});
+  // Internet sekin bo'lsa ham ilova cheksiz kutib qolmasin: 2 daqiqadan keyin to'xtatamiz
+  const ctl = new AbortController(), tm = setTimeout(() => ctl.abort(), 120000);
+  const j = await api("api/submit", {method: "POST", body: fd, signal: ctl.signal});
+  clearTimeout(tm);
+  if (ctl.signal.aborted && !j.ok) j.error = "Yuborish juda uzoq cho'zildi. Internetni tekshirib, qayta urinib ko'ring.";
   sending = false; tg?.MainButton.hideProgress(); $("#fallbackSubmit").disabled = false;
   if (j.ok) { haptic("success"); showSent(); }
   else say(j.error || "Xatolik. Qayta urinib ko'ring.");
