@@ -4,6 +4,8 @@ Foydalanuvchi bilan o'zbekcha (lotin) gaplashing. Javoblar qisqa va aniq bo'lsin
 Bu fayl har bir yangi suhbat boshida o'qiladi: eski suhbat tarixi kerak emas.
 **Foydalanuvchi talabi: har bir o'zgarish yoki buyruq bajarilgach, javob oxirida so'rang: «CLAUDE.md dagi holatni yangilab, commit qilaymi?» Ha desa, «Hozirgi holat» bo'limini yangilab commit + push qiling.**
 
+GitHub repo: `xushnudbeergashev/hadyaga-mushuk` (2026-11-11 gacha nomi `Zubayrfit` edi).
+
 ⚠️ Ish shu branch'da: `claude/admiring-ritchie-mry13c`. Repo'ning asosiy branch'i
 (`claude/telegram-bot-uni-launch-r44ygt`) eski, unda `hadya_worker/` yo'q.
 
