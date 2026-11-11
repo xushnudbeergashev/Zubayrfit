@@ -37,11 +37,12 @@ Adminlar: @zby_r, @xnd_e. Bot matnlari faqat o'zbek lotinida.
 
 - Katta fayllarni to'liq o'qimang (`src/index.html`, `dist/worker.js` juda katta): `grep` bilan kerakli joyni toping.
 - `dist/worker.js` ni o'qimang, u `src/` dan yig'iladi.
-- Jadvaldagi vazifalar (scheduled tasks) 2026-11-11 dan o'chirilgan. Qayta yoqilsa, har biri yangi suhbatda ishlasin.
+- Jadvaldagi vazifa: «Hadyaga Instagram kunlik» (`trig_01LLwojkBVEgEtmJGRrMtPoE`), har kuni 12:47 Toshkent,
+  «Hadyaga Instagram» muhitida (token o'sha yerda), har safar yangi suhbatda.
 
 ## Hozirgi holat (2026-11-11)
 
 - Instagram 1-hafta rejasi (9–15 noyabr) `PLAYBOOK.md` da. «Uy kutayotgan 3 mushukcha» Reels 10-noyabrda yasalgan (`marketing/reels`).
   Qolgani (11-noyabr karusel, 12-noyabr «5 ta ovqat», 14-noyabr «1 daqiqada e'lon») avtomatik joylash to'xtatilgani
   sabab bajarilmaydi, foydalanuvchi so'rasa qo'lda qilinadi.
-- Avtomatik joylash va izohlarga javob to'xtatilgan. Rejada: oddiy ishlarni (izohlar, kunlik e'lon) Worker cron'ga ko'chirish.
+- 2026-11-11 dan kunlik vazifa yoqildi: 1 post + 1 story (`post-listing`), izohlarga kuniga 1 marta (`comments`). Birinchi ishga tushish: 12-noyabr.
