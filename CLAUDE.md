@@ -6,8 +6,8 @@ Bu fayl har bir yangi suhbat boshida o'qiladi: eski suhbat tarixi kerak emas.
 
 GitHub repo: `xushnudbeergashev/hadyaga-mushuk` (2026-11-11 gacha nomi `Zubayrfit` edi).
 
-⚠️ Ish shu branch'da: `claude/admiring-ritchie-mry13c`. Repo'ning asosiy branch'i
-(`claude/telegram-bot-uni-launch-r44ygt`) eski, unda `hadya_worker/` yo'q.
+Asosiy branch: `claude/admiring-ritchie-mry13c` (2026-11-11 dan default). Eski `claude/telegram-bot-uni-launch-r44ygt`
+branch'ida `hadya_worker/` yo'q va token yeydigan eski `CLAUDE.md` bor: u branch'da ishlamang.
 
 ## Repoda nima bor
 
