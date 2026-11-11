@@ -1,6 +1,6 @@
 # Hadyaga mushuklar — loyiha pasporti
 
-Foydalanuvchi bilan o'zbekcha (lotin) gaplashing. Javoblar qisqa va aniq bo'lsin.
+Foydalanuvchi bilan o'zbekcha (lotin) gaplashing. Javoblar juda qisqa: faqat eng muhim ma'lumot, ortiqcha gap yo'q (token tejash).
 Bu fayl har bir yangi suhbat boshida o'qiladi: eski suhbat tarixi kerak emas.
 **Foydalanuvchi talabi: har bir o'zgarish yoki buyruq bajarilgach, javob oxirida so'rang: «CLAUDE.md dagi holatni yangilab, commit qilaymi?» Ha desa, «Hozirgi holat» bo'limini yangilab commit + push qiling.**
 
@@ -27,6 +27,7 @@ Adminlar: @zby_r, @xnd_e. Bot matnlari faqat o'zbek lotinida.
 
 - Telefon raqam va Telegram username Instagram'ga hech qachon yozilmaydi (post matnini keyin o'zgartirib bo'lmaydi).
 - Instagram ishlari reja bo'yicha so'ramasdan bajariladi; foydalanuvchiga faqat xato yoki muhim narsada yoziladi.
+- Kunlik reja: Telegram kanaldagi e'lonlardan har kuni 1 tasi Instagram'ga post, 1 tasi story; izohlarga kuniga 1 marta javob.
 - Izohlarga: bir tekshiruvda ko'pi bilan 6 ta javob, emoji va 7 kundan eski izohlarga javob yo'q.
 - API «action blocked» / code 368 qaytarsa: darhol to'xtang, foydalanuvchiga ayting.
 - Bio, highlight, musiqa, stiker, reklama (boost) API orqali qilinmaydi: foydalanuvchi qo'lda qiladi.
