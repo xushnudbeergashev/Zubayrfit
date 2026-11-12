@@ -2,7 +2,7 @@
 
 Foydalanuvchi bilan o'zbekcha (lotin) gaplashing. Javoblar juda qisqa: faqat eng muhim ma'lumot, ortiqcha gap yo'q (token tejash).
 Bu fayl har bir yangi suhbat boshida o'qiladi: eski suhbat tarixi kerak emas.
-**Foydalanuvchi talabi: har bir o'zgarish yoki buyruq bajarilgach, javob oxirida so'rang: «CLAUDE.md dagi holatni yangilab, commit qilaymi?» Ha desa, «Hozirgi holat» bo'limini yangilab commit + push qiling.**
+**Foydalanuvchi talabi: faqat qoida yoki holat o'zgarganda (yangi qoida, vazifa, reja) javob oxirida so'rang: «CLAUDE.md dagi holatni yangilab, commit qilaymi?» Oddiy savollarda so'ramang. Ha desa, «Hozirgi holat» bo'limini yangilab commit + push qiling.**
 
 GitHub repo: `xushnudbeergashev/hadyaga-mushuk` (2026-11-11 gacha nomi `Zubayrfit` edi).
 
