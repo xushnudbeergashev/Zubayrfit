@@ -183,6 +183,18 @@ test("faqat telefon bilan e'lon: kanal postida Telegram qatori yo'q", async () =
   assert.equal(it.warn, null);
 });
 
+test("mushuklar soni va «Aralash» jinsi saqlanadi va navbatda ko'rsatiladi", async () => {
+  const j = await reqJson("/api/submit", { method: "POST", body: hadyaForm({ phone: "+998 90 123 45 67", count: "3", gender: "a" }) });
+  assert.equal(j.ok, true, j.error);
+  const d = JSON.parse(row(j.id).data);
+  assert.equal(d.count, 3);
+  assert.equal(d.gender, "a");
+  const q = await reqJson("/api/admin/queue", { user: { id: ADMIN, first_name: "Admin" } });
+  const it = q.pending.find((i) => i.id === j.id);
+  assert.ok(JSON.stringify(it).includes("3 ta"), JSON.stringify(it));
+  env.DB.raw.prepare("DELETE FROM listings WHERE id=?").run(j.id); // keyingi testlarga xalaqit bermasin
+});
+
 test("faqat username bilan e'lon: telefon qatori yo'q, t.me havolasi ham qabul qilinadi", async () => {
   const j = await reqJson("/api/submit", { method: "POST", body: hadyaForm({ phone: "+998 ", tg_username: "https://t.me/boshqa_nom" }) });
   assert.equal(j.ok, true, j.error);

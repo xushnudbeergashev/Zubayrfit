@@ -18,7 +18,9 @@ const REGIONS = [{"name":"Toshkent shahri","tag":"Toshkent_shahri","d":[["Bektem
 
 const KINDS = { hadya: "#hadyaga", sotuv: "#sotiladi", reklama: "#reklama" };
 const KIND_NAMES = { hadya: "Hadya", sotuv: "Sotuv", reklama: "Reklama" };
-const GENDER = { f: "Urg'ochi", m: "Erkak", u: "Noma'lum" };
+const GENDER = { f: "Urg'ochi", m: "Erkak", a: "Aralash", u: "Noma'lum" };
+// Bitta e'londa bir nechta mushuk bo'lishi mumkin (1–10); 1 ta bo'lsa hech qayerda ko'rsatilmaydi
+const countText = (d) => (d.count > 1 ? `${d.count} ta` : "");
 const HEALTH = { soglom: "Sog'lom", emlangan: "Emlangan", steril: "Sterilizatsiya qilingan" };
 const DELIVERY = { bor: "Bor", yoq: "Yo'q", kelish: "Kelishiladi" };
 const CLOSED_LABEL = { given: "✅ <b>Berildi</b>", sold: "✅ <b>Sotildi</b>", closed: "⛔️ <b>E'lon dolzarb emas</b>" };
@@ -262,7 +264,7 @@ function priceText(l) {
 function shortTitle(l) {
   const d = l.data;
   if (l.kind === "reklama") return d.title || "Reklama";
-  if (d.breed || d.age) return [d.breed || "Mushuk", d.age].filter(Boolean).join(", ");
+  if (d.breed || d.age) return [d.breed || "Mushuk", d.age, countText(d)].filter(Boolean).join(", ");
   return d.headline || "Mushuk";
 }
 const placeText = (l) => [l.region, l.district].filter(Boolean).join(", ") || "Noma'lum";
@@ -274,7 +276,9 @@ function buildCaption(env, l, bot, closedAs, extra) {
     lines.push(`📢 Nomi: ${esc(d.title)}`, `📝 Tavsif: ${esc(d.about)}`,
       `💰 Narxi: ${esc(priceText(l))}`, `🏠 Manzil: ${address(l.region, l.district)}`);
   } else {
-    lines.push(`🦁 Zoti: ${esc(d.breed) || "Noma'lum"}`, `🐈 Yoshi: ${esc(d.age)}`, `😺 Jinsi: ${GENDER[d.gender]}`,
+    lines.push(`🦁 Zoti: ${esc(d.breed) || "Noma'lum"}`, `🐈 Yoshi: ${esc(d.age)}`);
+    if (countText(d)) lines.push(`🔢 Soni: ${countText(d)}`);
+    lines.push(`😺 Jinsi: ${GENDER[d.gender] || "Noma'lum"}`,
       `🏥 Sogʻligʻi: ${esc(healthText(d)) || "Noma'lum"}`, `🏠 Manzil: ${address(l.region, l.district)}`,
       `🚗 Dostafka: ${DELIVERY[d.delivery]}`, `💰 Narxi: ${priceText(l)}`);
   }
@@ -342,6 +346,8 @@ function cleanForm(form) {
       breed: g("breed", 40), age: g("age", 30), gender: g("gender", 1), health,
       health_note: g("health_note", 80), delivery: g("delivery", 6), extra: g("extra", 400),
     });
+    const count = parseInt(g("count", 3), 10);
+    if (count > 1) data.count = Math.min(count, 10);
     if (!data.age) return "Yoshini yozing.";
     if (!GENDER[data.gender]) return "Jinsini tanlang.";
     if (!DELIVERY[data.delivery]) return "Dostafka bor-yo'qligini tanlang.";
@@ -1328,7 +1334,7 @@ async function apiDetail(env, request, id) {
   } else {
     rows = l.kind === "reklama"
       ? [["Nomi", d.title], ["Tavsif", d.about], ["Narxi", priceText(l)]]
-      : [["Zoti", d.breed || "Noma'lum"], ["Yoshi", d.age], ["Jinsi", GENDER[d.gender] || "Noma'lum"],
+      : [["Zoti", d.breed || "Noma'lum"], ["Yoshi", d.age], ...(countText(d) ? [["Soni", countText(d)]] : []), ["Jinsi", GENDER[d.gender] || "Noma'lum"],
          ["Sog'lig'i", healthText(d) || "Noma'lum"], ["Dostafka", DELIVERY[d.delivery] || "Noma'lum"], ["Narxi", priceText(l)]];
     rows.push(["Manzil", placeText(l)]);
     if (d.extra) rows.push(["Qo'shimcha", d.extra]);
@@ -1640,7 +1646,7 @@ function detailRows(l) {
   const d = l.data;
   const rows = l.kind === "reklama"
     ? [["Nomi", d.title], ["Tavsif", d.about], ["Narxi", priceText(l)]]
-    : [["Zoti", d.breed || "Noma'lum"], ["Yoshi", d.age], ["Jinsi", GENDER[d.gender] || "Noma'lum"],
+    : [["Zoti", d.breed || "Noma'lum"], ["Yoshi", d.age], ...(countText(d) ? [["Soni", countText(d)]] : []), ["Jinsi", GENDER[d.gender] || "Noma'lum"],
        ["Sog'lig'i", healthText(d) || "Noma'lum"], ["Dostafka", DELIVERY[d.delivery] || "Noma'lum"], ["Narxi", priceText(l)]];
   rows.push(["Manzil", placeText(l)]);
   if (d.extra) rows.push(["Qo'shimcha", d.extra]);

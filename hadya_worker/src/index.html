@@ -411,9 +411,11 @@ nav button{position:relative}
     <div class="group k-cat">
       <div class="field"><label class="lbl" for="breed">Zoti</label><input id="breed" maxlength="40" placeholder="Masalan, britan, oddiy"></div>
       <div class="field" id="f-age"><label class="lbl" for="age">Yoshi</label><input id="age" maxlength="30" placeholder="Masalan, 3 oylik"><div class="err">Yoshini yozing.</div></div>
+      <div class="field"><label class="lbl" for="count">Nechta mushuk</label><input id="count" type="number" inputmode="numeric" min="1" max="10" value="1"></div>
       <div class="field" id="f-gender"><span class="lbl">Jinsi</span><div class="chips">
         <input type="radio" name="gender" id="g-f" value="f"><label for="g-f">Urg'ochi</label>
         <input type="radio" name="gender" id="g-m" value="m"><label for="g-m">Erkak</label>
+        <input type="radio" name="gender" id="g-a" value="a"><label for="g-a">Aralash</label>
         <input type="radio" name="gender" id="g-u" value="u"><label for="g-u">Bilmayman</label></div><div class="err">Jinsini tanlang.</div></div>
       <div class="field"><span class="lbl">Sog'lig'i</span><div class="chips">
         <input type="checkbox" name="health" id="h-1" value="soglom"><label for="h-1">Sog'lom</label>
@@ -769,7 +771,8 @@ function editListing(j) {
       <div class="field"><label class="lbl">Turi</label><select id="eKind">${opt(kinds, A.kind)}</select></div>
       <div class="field ek-cat"><label class="lbl">Zoti</label><input id="eBreed" maxlength="40" value="${esc(d.breed || "")}"></div>
       <div class="field ek-cat"><label class="lbl">Yoshi</label><input id="eAge" maxlength="30" value="${esc(d.age || "")}"></div>
-      <div class="field ek-cat"><label class="lbl">Jinsi</label><select id="eGender">${opt([["f", "Urg'ochi"], ["m", "Erkak"], ["u", "Noma'lum"]], d.gender || "u")}</select></div>
+      <div class="field ek-cat"><label class="lbl">Jinsi</label><select id="eGender">${opt([["f", "Urg'ochi"], ["m", "Erkak"], ["a", "Aralash"], ["u", "Noma'lum"]], d.gender || "u")}</select></div>
+      <div class="field ek-cat"><label class="lbl">Nechta mushuk</label><input id="eCount" type="number" inputmode="numeric" min="1" max="10" value="${d.count || 1}"></div>
       <div class="field ek-cat"><label class="lbl">Sog'lig'i</label><div class="chips">${Object.entries(HEALTH_T).map(([k, t]) =>
         `<input type="checkbox" id="eh-${k}" value="${k}"${(d.health || []).includes(k) ? " checked" : ""}><label for="eh-${k}">${t}</label>`).join("")}</div>
         <input id="eHealthNote" maxlength="80" placeholder="Qo'shimcha (ixtiyoriy)" value="${esc(d.health_note || "")}" style="margin-top:10px"></div>
@@ -801,7 +804,7 @@ function editListing(j) {
   q("[data-save]").onclick = async () => {
     const payload = A.imported
       ? {kind: q("#eKind").value, region: q("#eRegion").value, district: q("#eDistrict").value, raw: q("#eRaw").value}
-      : {kind: q("#eKind").value, region: q("#eRegion").value, district: q("#eDistrict").value, breed: q("#eBreed").value, age: q("#eAge").value,
+      : {kind: q("#eKind").value, region: q("#eRegion").value, district: q("#eDistrict").value, breed: q("#eBreed").value, age: q("#eAge").value, count: q("#eCount").value,
          gender: q("#eGender").value, health: [...m.el.querySelectorAll('[id^="eh-"]:checked')].map(i => i.value).join(","),
          health_note: q("#eHealthNote").value, delivery: q("#eDelivery").value, title: q("#eTitle").value, about: q("#eAbout").value,
          price: q("#ePrice").value, phone: q("#ePhone").value, tg_username: q("#eUser").value, extra: q("#eExtra").value};
@@ -1015,7 +1018,7 @@ function validate() {
 }
 
 // «E'lonni yuborish» bosilganda: avval yozilganlarni ko'rsatib, tasdiqlatamiz (xato bo'lsa o'zgartirish mumkin)
-const GENDER_T = {f: "Urg'ochi", m: "Erkak", u: "Bilmayman"};
+const GENDER_T = {f: "Urg'ochi", m: "Erkak", a: "Aralash", u: "Bilmayman"};
 const DELIV_T = {bor: "Bor", yoq: "Yo'q", kelish: "Kelishiladi"};
 const HEALTH_T = {soglom: "Sog'lom", emlangan: "Emlangan", steril: "Sterilizatsiya qilingan"};
 const fmtPrice = v => { const d = String(v).replace(/\D/g, ""); return d ? d.replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " so'm" : ""; };
@@ -1025,7 +1028,7 @@ function reviewRows() {
   const user = cleanUser();
   const rows = kind === "reklama"
     ? [["Nomi", v("title")], ["Tavsif", v("about")], ["Narxi", v("rprice")]]
-    : [["Zoti", v("breed")], ["Yoshi", v("age")], ["Jinsi", GENDER_T[val("gender")]], ["Sog'lig'i", health],
+    : [["Zoti", v("breed")], ["Yoshi", v("age")], ...(+v("count") > 1 ? [["Soni", Math.min(+v("count"), 10) + " ta"]] : []), ["Jinsi", GENDER_T[val("gender")]], ["Sog'lig'i", health],
        ["Dostafka", DELIV_T[val("delivery")]], ["Narxi", kind === "sotuv" ? fmtPrice(v("price")) : "Bepul"]];
   rows.push(["Hudud", v("region")], ["Tuman / shahar", v("district")],
     ["Telefon", phoneDigits() ? $("#phone").value.trim() : ""], ["Telegram", user ? "@" + user : ""], ["Qo'shimcha", v("extra")]);
@@ -1071,7 +1074,7 @@ async function sendListing() {
   sending = true; tg?.MainButton.showProgress(); $("#fallbackSubmit").disabled = true;
   const fd = new FormData();
   fd.append("initData", tg?.initData || ""); fd.append("kind", kind);
-  ["breed", "age", "health_note", "title", "about", "region", "district", "phone", "tg_username", "extra"].forEach(id => fd.append(id, $("#" + id).value));
+  ["breed", "age", "count", "health_note", "title", "about", "region", "district", "phone", "tg_username", "extra"].forEach(id => fd.append(id, $("#" + id).value));
   fd.append("price", kind === "reklama" ? $("#rprice").value : $("#price").value);
   fd.append("gender", val("gender")); fd.append("delivery", val("delivery")); fd.append("ig", $("#igOk").checked ? "1" : "0");
   fd.append("health", $$('input[name="health"]:checked').map(i => i.value).join(","));
@@ -1085,7 +1088,7 @@ function resetForm() {
   [0, 1, 2].forEach(i => setMedia(i, null));
   $$("#stepForm input:not([type=radio]):not([type=checkbox]), #stepForm textarea").forEach(e => e.value = "");
   $$("#stepForm input[type=radio], #stepForm input[type=checkbox]").forEach(e => e.checked = false);
-  $("#phone").value = "+998 "; $("#tg_username").value = myUsername(); $("#cnt").textContent = "0"; $("#igOk").checked = true;
+  $("#phone").value = "+998 "; $("#tg_username").value = myUsername(); $("#cnt").textContent = "0"; $("#igOk").checked = true; $("#count").value = "1";
   $("#region").value = ""; fillDistricts($("#district"), "", "Avval hududni tanlang");
   $("#stepForm").hidden = true; $("#stepType").hidden = false; kind = null;
 }
