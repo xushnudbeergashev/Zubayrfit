@@ -14,7 +14,7 @@ Barcha ishlar `ig.py` orqali bajariladi (`python3 ig.py <buyruq> [--dry]`).
 
 | Vaqt | Ish | Buyruq |
 |---|---|---|
-| 12:47 (kunlik vazifa) | Kanaldan 1 ta e'lon: post + story, keyin izohlarga javob (kuniga 1 marta) | `python3 ig.py post-listing`, `python3 ig.py comments` |
+| 19:07 (kunlik vazifa) | Kanaldan 1 ta e'lon: post + story, keyin izohlarga javob (kuniga 1 marta) | `python3 ig.py post-listing`, `python3 ig.py comments` |
 | 19:00 | Haftalik rejadagi kontent, keyin «Berildi» story | reja bo'yicha + `python3 ig.py story-given` |
 | Yakshanba 19:00 | Haftalik hisobot (jadval ko'rinishida) va keyingi hafta rejasi | `python3 ig.py report` |
 
