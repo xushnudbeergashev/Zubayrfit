@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<title>Bitta e'lon Reels</title>
+<link rel="stylesheet" href="../../video/fonts/fonts.local.css">
+<style>
+/* Bitta e'lon: 1-kadrdanoq mushuk yuzi, rasmlar to'liq ekranda, oxirida chaqiriq. ~9 s */
+:root{--blue:#2D46F0;--lemon:#FFD84A;--ink:#12123A;--display:"Unbounded","Arial Black",sans-serif;--body:"Onest",system-ui,sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1080px;height:1920px;overflow:hidden;background:#111}
+body{font-family:var(--body);color:#fff;position:relative}
+.ph{position:absolute;inset:0;background:#222 center/cover no-repeat;will-change:transform}
+.shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.55) 0%,rgba(0,0,0,0) 26%,rgba(0,0,0,0) 58%,rgba(0,0,0,.7) 100%)}
+.brand{position:absolute;top:110px;left:0;right:0;text-align:center;font:600 30px/1 var(--display);letter-spacing:.14em;z-index:5}
+.hook{position:absolute;left:60px;right:60px;top:170px;text-align:center;font:800 104px/1.05 var(--display);letter-spacing:-.02em;z-index:5;text-shadow:0 6px 30px rgba(0,0,0,.45)}
+.hook span{display:inline-block;background:var(--lemon);color:var(--ink);padding:4px 28px;border-radius:24px;box-shadow:0 10px 0 var(--ink);text-shadow:none}
+.info{position:absolute;left:70px;right:70px;bottom:250px;background:#fff;color:var(--ink);border:6px solid var(--ink);border-radius:40px;box-shadow:0 12px 0 var(--ink);padding:34px 40px;z-index:5}
+.info .a{font:800 58px/1.15 var(--display)}
+.info .b{font:600 40px/1.3 var(--body);color:#4A4A6A;margin-top:12px}
+.free{position:absolute;right:56px;bottom:520px;background:var(--lemon);color:var(--ink);border:6px solid var(--ink);border-radius:30px;padding:16px 30px;font:800 54px/1 var(--display);box-shadow:0 8px 0 var(--ink);z-index:6}
+#cta{position:absolute;inset:0;background:var(--blue);display:none;z-index:10}
+#cta .q{position:absolute;left:70px;right:70px;top:430px;text-align:center;font:800 96px/1.08 var(--display);letter-spacing:-.02em}
+#cta .q b{color:var(--lemon)}
+#cta .box{position:absolute;left:100px;right:100px;top:930px;background:#fff;color:var(--ink);border:6px solid var(--ink);border-radius:44px;box-shadow:0 12px 0 var(--ink);padding:40px 30px;text-align:center;font:700 42px/1.35 var(--body)}
+#cta .box b{display:block;font:800 46px/1.2 var(--display);color:var(--blue);margin-top:14px}
+#cta .hint{position:absolute;left:80px;right:80px;top:1380px;text-align:center;font:700 46px/1.35 var(--body)}
+#cta .hint span{background:var(--lemon);color:var(--ink);padding:2px 14px;border-radius:12px}
+#flash{position:absolute;inset:0;background:#fff;opacity:0;z-index:20;pointer-events:none}
+</style>
+</head>
+<body>
+<div class="ph" id="ph"></div>
+<div class="shade"></div>
+<div class="brand">🐾 HADYAGA MUSHUKLAR</div>
+<div class="hook" id="hook">Bizga<br><span>uy kerak</span> 🏠</div>
+<div class="free" id="free">BEPUL</div>
+<div class="info" id="info"><div class="a" id="ia"></div><div class="b" id="ib"></div></div>
+<div id="cta">
+  <div class="q">Ularga <b>uy</b><br>bo'lasizmi?</div>
+  <div class="box">Barcha e'lonlar Telegram'da 👇<b>t.me/hadyaga_mushuk_bot</b></div>
+  <div class="hint">Egasining kontakti kerakmi?<br>Izohga <span>«hadya»</span> deb yozing 📩</div>
+</div>
+<div id="flash"></div>
+<script>
+const $ = (s) => document.querySelector(s);
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const prog = (t, s, d) => clamp((t - s) / d);
+const eOut = (x) => 1 - Math.pow(1 - x, 3);
+const eBack = (x) => { const c1 = 1.9, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
+// window.DATA = {photos:[{photo,pos}], title, place}
+const D = window.DATA || {photos: []};
+const N = Math.max(1, D.photos.length), PER = 6.3 / N, CTA = 6.3;
+window.DURATION = 9;
+window.SCENE_STARTS = [...Array.from({length: N - 1}, (_, i) => +(PER * (i + 1)).toFixed(2)), CTA];
+$("#ia").textContent = D.title || ""; $("#ib").textContent = "📍 " + (D.place || "");
+window.render = (t) => {
+  const cta = t >= CTA;
+  $("#cta").style.display = cta ? "block" : "none";
+  if (!cta) {
+    const i = Math.min(N - 1, Math.floor(t / PER)), lt = t - i * PER, p = D.photos[i] || {};
+    if ($("#ph").dataset.i !== String(i)) { $("#ph").dataset.i = i; $("#ph").style.backgroundImage = `url('${p.photo}')`; $("#ph").style.backgroundPosition = p.pos || "center"; }
+    $("#ph").style.transform = `scale(${1.04 + .1 * lt / PER}) translateY(${-(lt / PER) * 20}px)`;
+    const h = eBack(prog(t, .15, .45));
+    $("#hook").style.transform = `scale(${Math.max(0, h)})`;
+    $("#info").style.transform = `translateY(${(1 - eOut(prog(t, .9, .5))) * 700}px)`;
+    $("#free").style.transform = `rotate(-8deg) scale(${Math.max(0, eBack(prog(t, 1.4, .4)))})`;
+  } else {
+    const lt = t - CTA, q = eBack(prog(lt, .05, .5));
+    $("#cta .q").style.transform = `scale(${.5 + .5 * q})`; $("#cta .q").style.opacity = prog(lt, .05, .12);
+    const b = eOut(prog(lt, .35, .4)); $("#cta .box").style.transform = `translateY(${(1 - b) * 400}px)`; $("#cta .box").style.opacity = b;
+    $("#cta .hint").style.opacity = prog(lt, .7, .3);
+  }
+  let f = 0;
+  for (const s of window.SCENE_STARTS) if (t >= s && t < s + .18) f = 1 - (t - s) / .18;
+  $("#flash").style.opacity = f * .85;
+};
+</script>
+</body>
+</html>

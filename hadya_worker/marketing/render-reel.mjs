@@ -12,7 +12,8 @@ const [, , stage, dataFile, outFile] = process.argv;
 const si = process.argv.indexOf("--stills");
 const FPS = 30;
 const data = JSON.parse(fs.readFileSync(dataFile, "utf8"));
-for (const c of Array.isArray(data) ? data : []) if (c.photo && !/^(https?|data|file):/.test(c.photo)) c.photo = pathToFileURL(path.resolve(c.photo)).href;
+const photos = Array.isArray(data) ? data : data.photos || []; // massiv yoki {photos:[...]}
+for (const c of photos) if (c.photo && !/^(https?|data|file):/.test(c.photo)) c.photo = pathToFileURL(path.resolve(c.photo)).href;
 
 const b = await chromium.launch();
 const p = await b.newPage({ viewport: { width: 1080, height: 1920 } });
@@ -20,7 +21,7 @@ p.on("pageerror", (e) => console.log("[xato]", e.message));
 await p.addInitScript((d) => { window.CATS = d; window.DATA = d; }, data);
 await p.goto(pathToFileURL(path.resolve(stage)).href);
 await p.evaluate(() => document.fonts.ready);
-await p.evaluate((d) => Promise.all(d.filter((c) => c.photo).map((c) => { const i = new Image(); i.src = c.photo; return i.decode().catch(() => {}); })), Array.isArray(data) ? data : []);
+await p.evaluate((d) => Promise.all(d.filter((c) => c.photo).map((c) => { const i = new Image(); i.src = c.photo; return i.decode().catch(() => {}); })), photos);
 const LEN = await p.evaluate(() => window.DURATION);
 
 if (si > 0) {
