@@ -6,7 +6,7 @@
 <title>Hadyaga mushuklar</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;800&family=Onest:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" media="print" onload="this.media='all'" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;800&family=Onest:wght@400;500;600;700&display=swap">
 <style>
 /* Uslub: «Yorqin va jasur» — ko'k blok, limon-sariq stikerlar, qalin siyoh hoshiyalar, polaroid kartalar */
 :root{
@@ -545,14 +545,26 @@ const ICON = {
 };
 let REGIONS = [], CONFIG = {price_text:"7 000 so'm"}, current = "search";
 
+// Kutish chegarasi + GET so'rovlarda qayta urinish (uyqudan chiqqanda internet kech ulanadi)
 async function api(path, opts = {}) {
   opts.headers = {...(opts.headers || {}), "X-Init-Data": tg?.initData || ""};
-  try {
-    const r = await fetch(path, opts);
-    const j = await r.json().catch(() => ({ok:false, error:"Server javob bermadi."}));
-    if (!r.ok && !j.error) j.error = "Xatolik yuz berdi.";
-    return j;
-  } catch { return {ok:false, error:"Internet aloqasini tekshiring."}; }
+  const retry = !opts.method || opts.method === "GET";
+  for (let i = 0; ; i++) {
+    const ac = new AbortController(), t = setTimeout(() => ac.abort(), opts.body instanceof FormData ? 120000 : 20000);
+    try {
+      const r = await fetch(path, {...opts, signal: ac.signal});
+      clearTimeout(t);
+      if (retry && r.status >= 500 && i < 2) { await new Promise(res => setTimeout(res, 1000 * (i + 1))); continue; }
+      const j = await r.json().catch(() => ({ok:false, error:"Server javob bermadi. Qayta urinib ko'ring."}));
+      if (r.status === 401 && inTg) j.error = "Ilova eskirdi. Uni yopib, bot orqali qayta oching.";
+      if (!r.ok && !j.error) j.error = "Xatolik yuz berdi.";
+      return j;
+    } catch {
+      clearTimeout(t);
+      if (retry && i < 2) { await new Promise(res => setTimeout(res, 1500 * (i + 1))); continue; }
+      return {ok:false, error:"Internet aloqasini tekshiring."};
+    }
+  }
 }
 const say = (m, cb) => tg?.showAlert ? tg.showAlert(m, cb) : (alert(m), cb && cb());
 /* ---------- oynalar (modal) ---------- */
@@ -636,6 +648,7 @@ async function search(reset = true) {
   offset += (j.items || []).length;
   $("#loadMore").hidden = !j.more;
   $("#noResults").hidden = offset > 0;
+  if (!j.error) $("#noResults").textContent = "Bu yerda hozircha e'lon yo'q";
   if (j.error) { $("#noResults").textContent = j.error; $("#noResults").hidden = false; }
 }
 $$('input[name="fk"], input[name="fs"]').forEach(i => i.onchange = () => search());
@@ -1474,6 +1487,13 @@ document.addEventListener("click", e => {
     if (ME.is_admin) refreshQueueBadge();
   }
   refreshAiLeft();
+  // Internet qaytsa yoki ilova uzoq yopiq turib qayta ochilsa, xato chiqqan ro'yxat qayta yuklanadi
+  let hiddenAt = 0;
+  const reload = () => { if (current === "search" && !$("#noResults").hidden) search(); };
+  addEventListener("online", reload);
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) hiddenAt = Date.now(); else if (hiddenAt && Date.now() - hiddenAt > 60000) reload();
+  });
 })();
 </script>
 </body>

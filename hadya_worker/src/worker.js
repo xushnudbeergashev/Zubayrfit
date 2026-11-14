@@ -374,7 +374,8 @@ async function authUser(env, raw) {
   const dcs = [...p.entries()].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)).map(([k, v]) => `${k}=${v}`).join("\n");
   const secret = await hmacRaw(new TextEncoder().encode("WebAppData"), env.BOT_TOKEN);
   if (hex(await hmacRaw(secret, dcs)) !== hash) return null;
-  if (now() - Number(p.get("auth_date") || 0) > 2 * 86400) return null;
+  // 7 kun: ilova kompyuterda uzoq ochiq tursa ham ishlayversin
+  if (now() - Number(p.get("auth_date") || 0) > 7 * 86400) return null;
   try {
     return JSON.parse(p.get("user"));
   } catch {
@@ -2238,7 +2239,8 @@ export default {
     const origin = url.origin;
     const path = url.pathname;
     const method = request.method;
-    await ensureSchema(env);
+    // Baza bir lahza javob bermasa ham so'rov yiqilmasin: keyingi so'rovda qayta tekshiriladi
+    await ensureSchema(env).catch((e) => console.log("Sxema tekshiruvi:", e.message));
 
     if (method === "POST" && path === "/tg") {
       if (request.headers.get("x-telegram-bot-api-secret-token") !== (await webhookSecret(env))) {
@@ -2306,7 +2308,7 @@ export default {
   },
 
   async scheduled(event, env, ctx) {
-    await ensureSchema(env);
+    await ensureSchema(env).catch((e) => console.log("Sxema tekshiruvi:", e.message));
     ctx.waitUntil(scheduledJobs(env));
   },
 };
